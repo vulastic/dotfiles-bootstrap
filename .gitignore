@@ -1,0 +1,40 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+
+# Logs
+*.log
+
+# Temp
+tmp/
+temp/
+.cache/
+
+# Fonts downloaded artifacts
+downloads/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Neovim temp
+*.swp
+*.swo
+
+# Local overrides
+.env
+.local
+
+# Kiloo specific
+.kilo/
+docs/

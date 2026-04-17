@@ -1,0 +1,17 @@
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = false
+
+[push]
+    autoSetupRemote = true
+
+[core]
+    editor = nvim
+
+[color]
+    ui = auto
+
+[ghq]
+    root = ~/src

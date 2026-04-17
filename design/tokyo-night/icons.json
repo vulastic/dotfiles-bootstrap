@@ -1,0 +1,7 @@
+{
+  "git": "branch",
+  "directory": "folder",
+  "time": "clock",
+  "status_ok": "chevron-right",
+  "status_error": "alert"
+}
