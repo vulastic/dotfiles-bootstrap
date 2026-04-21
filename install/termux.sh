@@ -42,17 +42,32 @@ main() {
   # ghq 설치 (aarch64 및 amd64만 지원)
   local arch=$(uname -m)
   case $arch in
-    aarch64|amd64) 
-      pkg install -y golang
-      GO111MODULE=on go install github.com/x-motemen/ghq@latest
-      append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.profile"
-      append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.config/fish/config.fish"
-      export PATH="$HOME/go/bin:$PATH"
-      ;;
+    aarch64) arch="arm64" ;;
+    amd64) arch="amd64" ;;
     *)
       log INFO "Unsupported architecture: $arch. Skipping ghq installation."
       ;;
   esac
+
+  if [ "$arch" != "" ]; then
+    log INFO "Installing ghq..."
+    local pkg="ghq_linux_${arch}.zip"
+    local tmp=$(mktemp)
+    local tmpdir=$(mktemp -d)
+    curl -fsSL -o "$tmp" "https://github.com/x-motemen/ghq/releases/download/v1.6.2/$pkg"
+    unzip -o "$tmp" -d "$tmpdir"
+    # Termux는 /usr/local/bin 대신 $PREFIX/bin 사용 권장되나, 
+    # 여기서는 단순화를 위해 바이너리만 추출하여 PATH에 추가하거나 
+    # 기존 방식대로 설치 시도 (Termux 환경에 맞춰 바이너리 위치 조정 필요할 수 있음)
+    # 일단은 바이너리 추출 후 $HOME/bin 등에 배치하는 것이 안전함
+    mkdir -p "$HOME/bin"
+    cp "$tmpdir/ghq_linux_${arch}/ghq" "$HOME/bin/ghq"
+    chmod +x "$HOME/bin/ghq"
+    append_once 'export PATH="$HOME/bin:$PATH"' "$HOME/.profile"
+    append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.config/fish/config.fish"
+    rm -f "$tmp"
+    rm -rf "$tmpdir"
+  fi
 
   install_starship
   configure_starship
