@@ -31,13 +31,19 @@ install_ghq() {
   command -v ghq >/dev/null 2>&1 && { log INFO "ghq already installed"; return; }
   log INFO "Installing ghq..."
   local arch=$(dpkg --print-architecture)
-  local pkg="ghq_linux_${arch}.deb"
-  [ "$arch" == "armhf" ] && pkg="ghq_linux_armv6.deb"
+  case $arch in
+    amd64) pkg="ghq_linux_amd64.zip" ;;
+    arm64) pkg="ghq_linux_arm64.zip" ;;
+    *) echo "Unsupported architecture: $arch. Skipping ghq installation."; return ;;
+  esac
   
-  local tmp=$(mktemp --suffix=.deb)
+  local tmp=$(mktemp)
+  local tmpdir=$(mktemp -d)
   curl -fsSL -o "$tmp" "https://github.com/x-motemen/ghq/releases/download/v1.6.2/$pkg"
-  sudo dpkg -i "$tmp" || sudo apt-get install -f -y
+  unzip -o "$tmp" -d "$tmpdir"
+  sudo install -Dm755 "$tmpdir/ghq" /usr/local/bin/ghq
   rm -f "$tmp"
+  rm -rf "$tmpdir"
 }
 
 # 폰트 설치 (Sarasa, Iosevka)

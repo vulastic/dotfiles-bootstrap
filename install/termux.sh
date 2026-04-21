@@ -39,14 +39,20 @@ main() {
   # zoxide 설치
   command -v zoxide >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 
-  # ghq 설치
-  if ! command -v ghq >/dev/null 2>&1; then
-    pkg install -y golang
-    GO111MODULE=on go install github.com/x-motemen/ghq@latest
-    append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.profile"
-    append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.config/fish/config.fish"
-    export PATH="$HOME/go/bin:$PATH"
-  fi
+  # ghq 설치 (aarch64 및 amd64만 지원)
+  local arch=$(uname -m)
+  case $arch in
+    aarch64|amd64) 
+      pkg install -y golang
+      GO111MODULE=on go install github.com/x-motemen/ghq@latest
+      append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.profile"
+      append_once 'export PATH="$HOME/go/bin:$PATH"' "$HOME/.config/fish/config.fish"
+      export PATH="$HOME/go/bin:$PATH"
+      ;;
+    *)
+      log INFO "Unsupported architecture: $arch. Skipping ghq installation."
+      ;;
+  esac
 
   install_starship
   configure_starship
