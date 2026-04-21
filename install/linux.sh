@@ -41,7 +41,7 @@ install_ghq() {
   local tmpdir=$(mktemp -d)
   curl -fsSL -o "$tmp" "https://github.com/x-motemen/ghq/releases/download/v1.6.2/$pkg"
   unzip -o "$tmp" -d "$tmpdir"
-  sudo install -Dm755 "$tmpdir/ghq_linux_$(echo $arch | tr -d '_')/ghq" /usr/local/bin/ghq
+  sudo install -Dm755 "$tmpdir/ghq_linux_${arch}/ghq" /usr/local/bin/ghq
   rm -f "$tmp"
   rm -rf "$tmpdir"
 }
