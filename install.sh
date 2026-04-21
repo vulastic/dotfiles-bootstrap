@@ -3,7 +3,6 @@
 set -euo pipefail
 
 # Determine script directory and create temp directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMP_DIR="$(mktemp -d)"
 REPO_URL="https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.tar.gz"
 
@@ -33,9 +32,9 @@ fi
 cd "$EXTRACTED_DIR"
 
 if [ -d "/data/data/com.termux/files/usr" ] || [ -n "${TERMUX_VERSION:-}" ]; then
-  exec bash "$./install/termux.sh"
+  exec bash "$EXTRACTED_DIR/install/termux.sh"
 else
-  exec bash "$./install/linux.sh"
+  exec bash "$EXTRACTED_DIR/install/linux.sh"
 fi
 
 # Remove temp directory (handled by trap on EXIT)
