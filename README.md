@@ -16,22 +16,21 @@ Windows PowerShell과 Linux 계열 환경(Ubuntu, Termux)에서 동일한 작업
 * `LazyVim` 기반 편집 환경
 * `git`, `fzf`, `ghq`, 디렉터리 점프 도구 사용
 * Tokyo Night 계열 시각 언어
-* Sarasa Mono K, Iosevka Nerd Font Mono 폰트 조합
+* Sarasa Mono K, Iosevka Nerd Font 폰트 조합
 
 ## 플랫폼별 구성
 
 ### Windows
 
 * PowerShell
-* Oh My Posh
+* Starship
 * Terminal-Icons
 * zoxide
 
 ### Linux / Ubuntu / Termux
 
 * fish
-* fisher
-* tide
+* starship
 * zoxide
 * `eza`로 `ls` 대체
 
@@ -46,50 +45,10 @@ Windows PowerShell과 Linux 계열 환경(Ubuntu, Termux)에서 동일한 작업
 * `ripgrep`
 * `fd`
 
-## 프로젝트 구조
-
-```text
-.
-├── install.ps1
-├── install.sh
-├── install/
-│   ├── common.sh
-│   ├── linux.sh
-│   ├── termux.sh
-│   └── windows.ps1
-├── config/
-│   ├── fish/
-│   ├── git/
-│   ├── nvim/
-│   ├── ohmyposh/
-│   ├── powershell/
-│   ├── shell/
-│   ├── starship/
-│   └── tmux/
-└── design/
-    └── tokyo-night/
-```
-
-## 설치
-
-### Windows
-
-```powershell
-irm https://raw.githubusercontent.com/sell0/dotfiles-bootstrap/main/install.ps1 | iex
-```
-
-### Ubuntu / Linux / Termux
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/sell0/dotfiles-bootstrap/main/install.sh | bash
-```
-
-`install.sh`는 github의 프로젝트를 다운받은 후 Termux 여부를 감지해서 `install/termux.sh` 또는 `install/linux.sh`로 라우팅한다.
-
 ## 적용 내용
 
-* PowerShell용 Tokyo Night 스타일 Oh My Posh 프롬프트
-* fish용 Tide 기반 프롬프트 설정
+* Starship 기반 크로스플랫폼 프롬프트 설정 (Tokyo Night 테마)
+* IosevkaTerm Nerd (우선) 및 Sarasa Monk K 폰트 구성
 * tmux 상단 상태바 테마
 * LazyVim용 Tokyo Night 색상 설정
 * 공통 alias 레이어 (`ls`, `ll`, `la`, `vim`, `cat`, `grep`, `find`)

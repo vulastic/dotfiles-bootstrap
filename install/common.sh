@@ -39,20 +39,6 @@ append_once() {
   fi
 }
 
-install_starship() {
-  if command -v starship >/dev/null 2>&1; then
-    log INFO "starship already installed"
-    return
-  fi
-
-  if command -v cargo >/dev/null 2>&1; then
-    cargo install starship --locked
-    return
-  fi
-
-  curl -fsSL https://starship.rs/install.sh | sh -s -- -y
-}
-
 install_lazyvim() {
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   local data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -80,13 +66,20 @@ configure_nvim() {
   copy_config "$CONFIG_DIR/nvim/lua/plugins/theme.lua" "$config_home/nvim/lua/plugins/theme.lua"
 }
 
-configure_tmux() {
-  copy_config "$CONFIG_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
+install_zellij() {
+  if command -v zellij >/dev/null 2>&1; then
+    log INFO "zellij already installed"
+    return
+  fi
+
+  log INFO "Installing zellij"
+  curl -sS https://zellij.org/install.sh | bash
 }
 
-configure_starship() {
-  ensure_dir "${XDG_CONFIG_HOME:-$HOME/.config}"
-  copy_config "$CONFIG_DIR/starship/starship.toml" "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
+configure_zellij() {
+  local zellij_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zellij"
+  ensure_dir "$zellij_config_dir"
+  copy_config "$CONFIG_DIR/zellij/config.kdl" "$zellij_config_dir/config.kdl"
 }
 
 configure_git() {
@@ -101,5 +94,19 @@ configure_shell_aliases() {
 }
 
 configure_fonts_notice() {
-  log INFO "Install fonts manually if package manager support is unavailable: Sarasa Mono K, Iosevka Nerd Font Mono"
+  log INFO "Install fonts manually if package manager support is unavailable: IosevkaTerm Nerd, Sarasa Mono K"
+}
+
+install_starship() {
+  if command -v starship >/dev/null 2>&1; then
+    log INFO "starship already installed"
+    return
+  fi
+  log INFO "Installing starship"
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
+}
+
+configure_starship() {
+  ensure_dir "${XDG_CONFIG_HOME:-$HOME/.config}"
+  copy_config "$CONFIG_DIR/starship/starship.toml" "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 }

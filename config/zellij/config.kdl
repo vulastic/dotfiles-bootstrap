@@ -1,0 +1,18 @@
+keybinds {
+    unbind "Ctrl h"
+    unbind "Ctrl j"
+    unbind "Ctrl k"
+    unbind "Ctrl l"
+}
+
+theme "tokyo-night"
+
+default_layout "default"
+
+pane_frames false
+
+mouse_mode true
+
+scroll_buffer 10000
+
+default_shell "pwsh.exe"

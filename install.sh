@@ -34,9 +34,9 @@ cd "$EXTRACTED_DIR"
 
 if [ -d "/data/data/com.termux/files/usr" ] || [ -n "${TERMUX_VERSION:-}" ]; then
   exec bash "$./install/termux.sh"
+else
+  exec bash "$./install/linux.sh"
 fi
-
-exec bash "./install/linux.sh"
 
 # Remove temp directory (handled by trap on EXIT)
 echo "Installation complete!"

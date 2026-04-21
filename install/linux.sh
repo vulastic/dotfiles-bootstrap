@@ -33,33 +33,15 @@ install_eza() {
 }
 
 install_fisher() {
-  if ! command -v fish >/dev/null 2>&1; then
-    log ERROR "fish is required before installing fisher"
-    exit 1
-  fi
-
-  if fish -c 'functions -q fisher' >/dev/null 2>&1; then
-    log INFO "fisher already installed"
-    return
-  fi
-
-  curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | fish -c 'source; fisher install jorgebucaran/fisher'
+  # fisher is no longer needed with starship
+  log INFO "fisher is not required with starship"
 }
 
 configure_fish() {
   ensure_dir "$HOME/.config/fish/functions"
   copy_config "$CONFIG_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
-  fish -c 'fisher install IlanCosman/tide@v6 jorgebucaran/autopair.fish PatrickF1/fzf.fish'
-  fish -c 'set -U tide_left_prompt_items os pwd git newline character'
-  fish -c 'set -U tide_right_prompt_items status cmd_duration time'
-  fish -c 'set -U tide_color_os 7aa2f7'
-  fish -c 'set -U tide_color_pwd 7dcfff'
-  fish -c 'set -U tide_color_git_branch bb9af7'
-  fish -c 'set -U tide_color_git_operation e0af68'
-  fish -c 'set -U tide_color_git_stash 9ece6a'
-  fish -c 'set -U tide_color_status ok'
-  fish -c 'set -U tide_color_command_duration e0af68'
-  fish -c 'set -U tide_color_time 565f89'
+  # Starship is now configured via environment variables or direct config
+  # No need to install tide or set tide-specific variables
 }
 
 install_ghq() {
@@ -169,7 +151,7 @@ main() {
   require_cmd git
 
   log INFO "Installing Ubuntu shell stack"
-  apt_install fish tmux neovim fzf gh jq unzip ripgrep fd-find bat git gnupg p7zip-full
+  apt_install fish neovim fzf gh jq unzip ripgrep fd-find bat git gnupg p7zip-full
   install_eza
 
   if ! command -v zoxide >/dev/null 2>&1; then
@@ -178,11 +160,12 @@ main() {
 
   install_ghq
 
+  # install_fisher  # No longer needed with starship
   install_starship
-  install_fisher
   configure_starship
   configure_fish
-  configure_tmux
+  install_zellij
+  configure_zellij
   configure_git
   configure_shell_aliases "$HOME/.bashrc"
   install_lazyvim

@@ -26,6 +26,13 @@ if (Test-Path $aliasesPath) {
     . $aliasesPath
 }
 
-if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-    oh-my-posh init pwsh --config "$HOME/.config/ohmyposh/tokyo-night.omp.json" | Invoke-Expression
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& starship init powershell)
+}
+
+# Auto-start Zellij if not already inside a session
+if (-not $env:ZELLIJ) {
+    if (Get-Command zellij -ErrorAction SilentlyContinue) {
+        zellij
+    }
 }

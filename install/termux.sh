@@ -11,6 +11,16 @@ pkg_install() {
   pkg install -y "$@"
 }
 
+install_zellij() {
+  if command -v zellij >/dev/null 2>&1; then
+    log INFO "zellij already installed"
+    return
+  fi
+
+  log INFO "Installing zellij"
+  curl -sS https://zellij.org/install.sh | bash
+}
+
 install_fisher() {
   if ! command -v fish >/dev/null 2>&1; then
     log ERROR "fish is required before installing fisher"
@@ -28,14 +38,7 @@ install_fisher() {
 configure_fish() {
   ensure_dir "$HOME/.config/fish/functions"
   copy_config "$CONFIG_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
-  fish -c 'fisher install IlanCosman/tide@v6 jorgebucaran/autopair.fish PatrickF1/fzf.fish'
-  fish -c 'set -U tide_left_prompt_items os pwd git newline character'
-  fish -c 'set -U tide_right_prompt_items status cmd_duration time'
-  fish -c 'set -U tide_color_os 7aa2f7'
-  fish -c 'set -U tide_color_pwd 7dcfff'
-  fish -c 'set -U tide_color_git_branch bb9af7'
-  fish -c 'set -U tide_color_git_operation e0af68'
-  fish -c 'set -U tide_color_time 565f89'
+  fish -c 'fisher install jorgebucaran/autopair.fish PatrickF1/fzf.fish'
 }
 
 install_termux_font_notice() {
@@ -49,7 +52,7 @@ install_termux_font_notice() {
 }
 
 main() {
-  pkg_install fish tmux neovim fzf git gh curl unzip tar ripgrep fd bat eza
+  pkg_install fish neovim fzf git gh curl unzip tar ripgrep fd bat eza
 
   if ! command -v zoxide >/dev/null 2>&1; then
     curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
@@ -64,10 +67,10 @@ main() {
   fi
 
   install_starship
-  install_fisher
   configure_starship
+  install_zellij
+  configure_zellij
   configure_fish
-  configure_tmux
   configure_git
   configure_shell_aliases "$HOME/.profile"
   install_lazyvim

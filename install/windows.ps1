@@ -199,17 +199,17 @@ function Configure-PowerShellProfile {
 }
 
 function Configure-WindowsTerminalNotice {
-    Write-Step 'Set Sarasa Mono K or Iosevka Nerd Font Mono in Windows Terminal profile manually if needed'
+    Write-Step 'IosevkaTerm Nerd (priority) and Sarasa Monk K configured in starship.toml'
 }
 
 Write-Step 'Bootstrapping Windows shell environment'
 Ensure-Scoop
 'main','extras','versions','nerd-fonts' | ForEach-Object { Ensure-ScoopBucket -Name $_ }
 
-'git','pwsh','oh-my-posh','fzf','zoxide','neovim','eza','bat','fd','ripgrep','ghq','gh','7zip' |
+'git','pwsh','starship','fzf','zoxide','neovim','eza','bat','fd','ripgrep','ghq','gh','7zip' |
     ForEach-Object { Ensure-ScoopApp -Name $_ }
 
-Ensure-WingetPackage -CommandName 'tmux' -PackageId 'arndawg.tmux-windows'
+Ensure-ScoopApp -Name 'zellij'
 
 Ensure-NuGet
 'Terminal-Icons','PSReadLine','PSFzf' | ForEach-Object { Ensure-PSModule -Name $_ }
@@ -218,13 +218,16 @@ Ensure-FontScoop -FontName 'Sarasa Mono K' -ScoopPackage 'SarasaGothic-K'
 Ensure-FontScoop -FontName 'Iosevka Nerd Font Mono' -ScoopPackage 'Iosevka-NF-Mono'
 
 Copy-Config -Source (Join-Path $ConfigDir 'starship\starship.toml') -Target (Join-Path $HOME '.config\starship.toml')
-Copy-Config -Source (Join-Path $ConfigDir 'ohmyposh\tokyo-night.omp.json') -Target (Join-Path $HOME '.config\ohmyposh\tokyo-night.omp.json')
-Copy-Config -Source (Join-Path $ConfigDir 'git\gitconfig') -Target (Join-Path $HOME '.gitconfig')
-Copy-Config -Source (Join-Path $ConfigDir 'tmux\tmux.conf') -Target (Join-Path $HOME '.tmux.conf')
-Copy-Config -Source (Join-Path $ConfigDir 'shell\aliases.ps1') -Target (Join-Path $HOME '.config\powershell\aliases.ps1')
-Configure-PowerShellProfile
-Ensure-LazyVim
-Configure-Nvim
-Configure-WindowsTerminalNotice
+    Copy-Config -Source (Join-Path $ConfigDir 'git\gitconfig') -Target (Join-Path $HOME '.gitconfig')
+    $zellijBaseDir = Join-Path $env:APPDATA 'Zellij'
+    $zellijConfigDir = Join-Path $zellijBaseDir 'config'
+    Ensure-Directory -Path $zellijConfigDir
+    Copy-Config -Source (Join-Path $ConfigDir 'zellij\config.kdl') -Target (Join-Path $zellijConfigDir 'config.kdl')
+    
+    Copy-Config -Source (Join-Path $ConfigDir 'shell\aliases.ps1') -Target (Join-Path $HOME '.config\powershell\aliases.ps1')
+    Configure-PowerShellProfile
+    Ensure-LazyVim
+    Configure-Nvim
+    Configure-WindowsTerminalNotice
 
-Write-Step 'Windows bootstrap complete'
+    Write-Step 'Windows bootstrap complete'

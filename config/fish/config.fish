@@ -31,6 +31,17 @@ if type -q zoxide
     zoxide init fish | source
 end
 
+if type -q starship
+    starship init fish | source
+end
+
+# Auto-start Zellij if not already inside a session
+if not set -q ZELLIJ
+    if type -q zellij
+        zellij
+    end
+end
+
 if type -q ghq
     set -gx GHQ_ROOT "$HOME/src"
 end
