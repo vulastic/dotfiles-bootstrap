@@ -2,111 +2,81 @@
 
 set -euo pipefail
 
+# 경로 설정
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_DIR="$ROOT_DIR/config"
-DESIGN_DIR="$ROOT_DIR/design/tokyo-night"
 
+# 로그 출력 함수
 log() {
   printf '\n[%s] %s\n' "$1" "$2"
 }
 
-ensure_dir() {
-  mkdir -p "$@"
-}
-
+# 디렉토리 생성 및 파일 백업/복사 유틸리티
+ensure_dir() { mkdir -p "$@"; }
 backup_file() {
   local target="$1"
-  if [ -f "$target" ] || [ -L "$target" ]; then
-    cp -f "$target" "$target.bak"
-  fi
+  [ -f "$target" ] || [ -L "$target" ] && cp -f "$target" "$target.bak"
 }
-
 copy_config() {
-  local source="$1"
-  local target="$2"
+  local source="$1" target="$2"
   ensure_dir "$(dirname "$target")"
   backup_file "$target"
   cp -f "$source" "$target"
 }
 
+# 파일에 중복 없이 라인 추가
 append_once() {
-  local line="$1"
-  local file="$2"
+  local line="$1" file="$2"
   ensure_dir "$(dirname "$file")"
   touch "$file"
-  if ! grep -Fq "$line" "$file"; then
-    printf '%s\n' "$line" >> "$file"
-  fi
+  grep -Fq "$line" "$file" || printf '%s\n' "$line" >> "$file"
 }
 
-install_lazyvim() {
-  local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  local data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
-  local state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
-  local cache_home="${XDG_CACHE_HOME:-$HOME/.cache}"
-
-  if [ -d "$config_home/nvim" ]; then
-    log INFO "nvim config already exists, skipping LazyVim bootstrap"
-    return
-  fi
-
-  git clone https://github.com/LazyVim/starter "$config_home/nvim"
-  rm -rf "$config_home/nvim/.git"
-  rm -f "$config_home/nvim/lua/plugins/example.lua"
-  ensure_dir "$data_home" "$state_home" "$cache_home"
-}
-
-configure_nvim() {
-  local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  if [ ! -d "$config_home/nvim" ]; then
-    return
-  fi
-
-  ensure_dir "$config_home/nvim/lua/plugins"
-  copy_config "$CONFIG_DIR/nvim/lua/plugins/theme.lua" "$config_home/nvim/lua/plugins/theme.lua"
-}
-
+# Zellij 설치 및 설정
 install_zellij() {
-  if command -v zellij >/dev/null 2>&1; then
-    log INFO "zellij already installed"
-    return
-  fi
-
-  log INFO "Installing zellij"
+  command -v zellij >/dev/null 2>&1 && { log INFO "Zellij already installed"; return; }
+  log INFO "Installing Zellij..."
   curl -sS https://zellij.org/install.sh | bash
 }
-
 configure_zellij() {
-  local zellij_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/zellij"
-  ensure_dir "$zellij_config_dir"
-  copy_config "$CONFIG_DIR/zellij/config.kdl" "$zellij_config_dir/config.kdl"
+  local dir="${XDG_CONFIG_HOME:-$HOME/.config}/zellij"
+  ensure_dir "$dir"
+  copy_config "$CONFIG_DIR/zellij/config.kdl" "$dir/config.kdl"
 }
 
-configure_git() {
-  copy_config "$CONFIG_DIR/git/gitconfig" "$HOME/.gitconfig"
+# Neovim (LazyVim) 설치 및 설정
+install_lazyvim() {
+  local home="${XDG_CONFIG_HOME:-$HOME/.config}"
+  [ -d "$home/nvim" ] && { log INFO "Neovim config exists, skipping bootstrap"; return; }
+  
+  git clone https://github.com/LazyVim/starter "$home/nvim"
+  rm -rf "$home/nvim/.git" "$home/nvim/lua/plugins/example.lua"
+  ensure_dir "${XDG_DATA_HOME:-$HOME/.local/share}" "${XDG_STATE_HOME:-$HOME/.local/state}" "${XDG_CACHE_HOME:-$HOME/.cache}"
+}
+configure_nvim() {
+  local home="${XDG_CONFIG_HOME:-$HOME/.config}"
+  [ ! -d "$home/nvim" ] && return
+  ensure_dir "$home/nvim/lua/plugins"
+  copy_config "$CONFIG_DIR/nvim/lua/plugins/theme.lua" "$home/nvim/lua/plugins/theme.lua"
 }
 
-configure_shell_aliases() {
-  local shell_rc="$1"
-  append_once '[ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"' "$shell_rc"
-  ensure_dir "$HOME/.config/shell"
-  copy_config "$CONFIG_DIR/shell/aliases.sh" "$HOME/.config/shell/aliases.sh"
-}
-
-configure_fonts_notice() {
-  log INFO "Install fonts manually if package manager support is unavailable: IosevkaTerm Nerd, Sarasa Mono K"
-}
-
-install_starship() {
-  if command -v starship >/dev/null 2>&1; then
-    log INFO "starship already installed"
-    return
-  fi
-  log INFO "Installing starship"
-  curl -sS https://starship.rs/install.sh | sh -s -- -y
-}
-
+# 기타 도구 설정
+configure_git() { copy_config "$CONFIG_DIR/git/gitconfig" "$HOME/.gitconfig"; }
 configure_starship() {
   ensure_dir "${XDG_CONFIG_HOME:-$HOME/.config}"
   copy_config "$CONFIG_DIR/starship/starship.toml" "${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
+}
+install_starship() {
+  command -v starship >/dev/null 2>&1 && { log INFO "Starship already installed"; return; }
+  log INFO "Installing Starship..."
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
+}
+configure_shell_aliases() {
+  local rc="$1"
+  append_once '[ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"' "$rc"
+  ensure_dir "$HOME/.config/shell"
+  copy_config "$CONFIG_DIR/shell/aliases.sh" "$HOME/.config/shell/aliases.sh"
+}
+configure_fonts_notice() {
+  log INFO "Please install fonts manually: IosevkaTerm Nerd Font, Sarasa Mono K"
 }

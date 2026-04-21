@@ -3,61 +3,43 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=install/common.sh
 source "$SCRIPT_DIR/common.sh"
 
+# Termux 패키지 설치
 pkg_install() {
-  pkg update -y
-  pkg install -y "$@"
+  pkg update -y && pkg install -y "$@"
 }
 
+# Zellij 설치 (공식 스크립트)
 install_zellij() {
-  if command -v zellij >/dev/null 2>&1; then
-    log INFO "zellij already installed"
-    return
-  fi
-
-  log INFO "Installing zellij"
+  command -v zellij >/dev/null 2>&1 && { log INFO "Zellij already installed"; return; }
+  log INFO "Installing Zellij..."
   curl -sS https://zellij.org/install.sh | bash
 }
 
-install_fisher() {
-  if ! command -v fish >/dev/null 2>&1; then
-    log ERROR "fish is required before installing fisher"
-    exit 1
-  fi
-
-  if fish -c 'functions -q fisher' >/dev/null 2>&1; then
-    log INFO "fisher already installed"
-    return
-  fi
-
-  curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | fish -c 'source; fisher install jorgebucaran/fisher'
-}
-
+# Fish 설정 및 플러그인 설치
 configure_fish() {
   ensure_dir "$HOME/.config/fish/functions"
   copy_config "$CONFIG_DIR/fish/config.fish" "$HOME/.config/fish/config.fish"
+  # fisher 설치 및 필수 플러그인 추가
+  if ! fish -c 'functions -q fisher' >/dev/null 2>&1; then
+    curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | fish -c 'source; fisher install jorgebucaran/fisher'
+  fi
   fish -c 'fisher install jorgebucaran/autopair.fish PatrickF1/fzf.fish'
 }
 
 install_termux_font_notice() {
-  if command -v fc-list >/dev/null 2>&1 && fc-list | grep -iq "Sarasa Mono K"; then
-    log INFO "Sarasa Mono K already available"
-  elif command -v fc-list >/dev/null 2>&1 && fc-list | grep -iq "Iosevka"; then
-    log INFO "Iosevka already available"
-  else
-    log INFO "Set Sarasa Mono K or Iosevka Nerd Font Mono in the terminal app profile manually"
-  fi
+  log INFO "Set Sarasa Mono K or IosevkaTerm Nerd Font in the terminal app profile manually"
 }
 
 main() {
+  log INFO "Installing Termux shell stack"
   pkg_install fish neovim fzf git gh curl unzip tar ripgrep fd bat eza
 
-  if ! command -v zoxide >/dev/null 2>&1; then
-    curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
-  fi
+  # zoxide 설치
+  command -v zoxide >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 
+  # ghq 설치
   if ! command -v ghq >/dev/null 2>&1; then
     pkg install -y golang
     GO111MODULE=on go install github.com/x-motemen/ghq@latest

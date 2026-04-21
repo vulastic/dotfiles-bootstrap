@@ -215,7 +215,7 @@ Ensure-NuGet
 'Terminal-Icons','PSReadLine','PSFzf' | ForEach-Object { Ensure-PSModule -Name $_ }
 
 Ensure-FontScoop -FontName 'Sarasa Mono K' -ScoopPackage 'SarasaGothic-K'
-Ensure-FontScoop -FontName 'Iosevka Nerd Font Mono' -ScoopPackage 'Iosevka-NF-Mono'
+Ensure-FontScoop -FontName 'Iosevka Term Nerd Font' -ScoopPackage 'IosevkaTerm-NF-Mono'
 
 Copy-Config -Source (Join-Path $ConfigDir 'starship\starship.toml') -Target (Join-Path $HOME '.config\starship.toml')
     Copy-Config -Source (Join-Path $ConfigDir 'git\gitconfig') -Target (Join-Path $HOME '.gitconfig')
