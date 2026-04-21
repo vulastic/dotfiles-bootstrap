@@ -5,7 +5,7 @@ set -euo pipefail
 # Determine script directory and create temp directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMP_DIR="$(mktemp -d)"
-REPO_URL="https://github.com/sell0/dotfiles-bootstrap/archive/refs/heads/main.tar.gz"
+REPO_URL="https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.tar.gz"
 
 # Cleanup function to remove temp directory on exit
 cleanup() {

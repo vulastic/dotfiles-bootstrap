@@ -11,7 +11,7 @@ New-Item -ItemType Directory -Path $tempDir | Out-Null
 try {
     # Download and extract the repository
     $zipPath = Join-Path $tempDir "dotfiles-bootstrap.zip"
-    Invoke-WebRequest -Uri "https://github.com/sell0/dotfiles-bootstrap/archive/refs/heads/main.zip" -OutFile $zipPath -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.zip" -OutFile $zipPath -UseBasicParsing
     
     Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
     

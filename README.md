@@ -58,3 +58,19 @@ Windows PowerShell과 Linux 계열 환경(Ubuntu, Termux)에서 동일한 작업
 * 폰트는 플랫폼별 패키지 가용성 차이로 인해 일부 환경에서는 수동 지정이 필요하다.
 * Ubuntu의 `eza`는 외부 저장소를 추가해서 설치한다.
 * 기존 사용자 설정 파일이 있으면 `.bak` 백업을 남긴다.
+
+## 실행 방법 (GitHub raw)
+
+### install.sh (Linux/macOS/WSL)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/main/install.sh | bash
+```
+
+### install.ps1 (Windows PowerShell)
+
+```powershell
+iex (irm https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/main/install.ps1)
+```
+
+> **주의**: 실행 전에 스크립트 내용을 검토하고, 필요한 권한을 갖춘 터미널에서 실행하세요.
