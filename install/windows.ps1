@@ -1,105 +1,204 @@
 # windows.ps1
 # ------------------------------------------------------------
-# dotfile-bootstrap Windows Installer
-# Safe install:
-# - Check first
-# - Skip if already installed
+# dotfiles-bootstrap Windows Installer
+# Uses:
+# - winget
+# - GitHub direct font install
+# - Windows Terminal config
+# - PowerShell profile theme
 # ------------------------------------------------------------
 
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $ThemeSrc = Join-Path $RepoRoot "shell\powershell\tokyonight.ps1"
+$TempDir  = Join-Path $env:TEMP "dotfiles-bootstrap-fonts"
 
 Write-Host ""
-Write-Host "dotfile-bootstrap Windows Installer" -ForegroundColor Cyan
+Write-Host "dotfiles-bootstrap Windows Installer" -ForegroundColor Cyan
 Write-Host ""
 
 # ------------------------------------------------------------
-# 1. PowerShell 7.x
+# Helpers
 # ------------------------------------------------------------
 
-if (Get-Command pwsh -ErrorAction SilentlyContinue) {
-    Write-Host "PowerShell 7 already installed." -ForegroundColor Green
-}
-else {
-    Write-Host "Installing PowerShell 7..." -ForegroundColor Yellow
-    winget install --id Microsoft.PowerShell --source winget `
-        --accept-package-agreements `
-        --accept-source-agreements
+function Install-FontFile {
+    param([string]$FilePath)
+
+    $Shell = New-Object -ComObject Shell.Application
+    $Fonts = $Shell.Namespace(0x14)
+    $Fonts.CopyHere($FilePath)
 }
 
-# ------------------------------------------------------------
-# 2. Scoop
-# ------------------------------------------------------------
+function Ensure-WingetPackage {
+    param(
+        [string]$Command,
+        [string]$WingetId,
+        [string]$Name
+    )
 
-if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    Write-Host "Scoop already installed." -ForegroundColor Green
-}
-else {
-    Write-Host "Installing Scoop..." -ForegroundColor Yellow
-    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-    Invoke-RestMethod get.scoop.sh | Invoke-Expression
-}
+    if (Get-Command $Command -ErrorAction SilentlyContinue) {
+        Write-Host "$Name already installed." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Installing $Name..." -ForegroundColor Yellow
 
-# ------------------------------------------------------------
-# 3. Git
-# ------------------------------------------------------------
-
-if (Get-Command git -ErrorAction SilentlyContinue) {
-    Write-Host "Git already installed." -ForegroundColor Green
-}
-else {
-    Write-Host "Installing Git..." -ForegroundColor Yellow
-    scoop install git
+        winget install --id $WingetId -e `
+            --accept-package-agreements `
+            --accept-source-agreements
+    }
 }
 
+function Ensure-Profile {
+    param(
+        [string]$Dir,
+        [string]$ProfilePath,
+        [string]$ThemeDest
+    )
+
+    New-Item -ItemType Directory -Path $Dir -Force | Out-Null
+
+    if (-not (Test-Path $ProfilePath)) {
+        New-Item -ItemType File -Path $ProfilePath -Force | Out-Null
+    }
+
+    Copy-Item $ThemeSrc $ThemeDest -Force
+
+    $content = Get-Content $ProfilePath -Raw -ErrorAction SilentlyContinue
+    $line = ". `"$ThemeDest`""
+
+    if ($content -notmatch [regex]::Escape($ThemeDest)) {
+        Add-Content $ProfilePath ""
+        Add-Content $ProfilePath "# dotfiles-bootstrap"
+        Add-Content $ProfilePath $line
+    }
+}
+
 # ------------------------------------------------------------
-# 4. Fonts
+# 1. PowerShell 7
 # ------------------------------------------------------------
 
-scoop bucket add nerd-fonts 2>$null
+Ensure-WingetPackage `
+    -Command "pwsh" `
+    -WingetId "Microsoft.PowerShell" `
+    -Name "PowerShell 7"
+
+# ------------------------------------------------------------
+# 2. Git
+# ------------------------------------------------------------
+
+Ensure-WingetPackage `
+    -Command "git" `
+    -WingetId "Git.Git" `
+    -Name "Git"
+
+# ------------------------------------------------------------
+# 3. Fonts
+# ------------------------------------------------------------
+
+if (Test-Path $TempDir) {
+    Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
 
 $fonts = Get-ChildItem "$env:WINDIR\Fonts" |
     Select-Object -ExpandProperty Name
 
+# ------------------------------------------------------------
 # IosevkaTerm Nerd Font
+# ------------------------------------------------------------
+
 if ($fonts -match "IosevkaTerm") {
     Write-Host "IosevkaTerm Nerd Font already installed." -ForegroundColor Green
 }
 else {
     Write-Host "Installing IosevkaTerm Nerd Font..." -ForegroundColor Yellow
-    scoop install nerd-fonts/IosevkaTerm-NF-Mono
+
+    $zip = Join-Path $TempDir "iosevka-term.zip"
+
+    Invoke-WebRequest `
+        -Uri "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip" `
+        -OutFile $zip
+
+    Expand-Archive $zip `
+        -DestinationPath "$TempDir\iosevka-term" `
+        -Force
+
+    Get-ChildItem "$TempDir\iosevka-term\*.ttf" |
+        Where-Object {
+            $_.Name -match '^IosevkaTermNerdFont-(Regular|Italic|Bold|BoldItalic)\.ttf$'
+        } |
+        ForEach-Object {
+            Install-FontFile $_.FullName
+        }
 }
 
-# Iosevka Nerd Font
-if ($fonts -match "Iosevka" -and $fonts -notmatch "IosevkaTerm") {
-    Write-Host "Iosevka Nerd Font already installed." -ForegroundColor Green
+# ------------------------------------------------------------
+# Iosevka Nerd Font Mono
+# ------------------------------------------------------------
+
+if ($fonts -match "Iosevka Nerd Font Mono") {
+    Write-Host "Iosevka Nerd Font Mono already installed." -ForegroundColor Green
 }
 else {
-    Write-Host "Installing Iosevka Nerd Font..." -ForegroundColor Yellow
-    scoop install nerd-fonts/Iosevka-NF
+    Write-Host "Installing Iosevka Nerd Font Mono..." -ForegroundColor Yellow
+
+    $zip = Join-Path $TempDir "iosevka.zip"
+
+    Invoke-WebRequest `
+        -Uri "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip" `
+        -OutFile $zip
+
+    Expand-Archive $zip `
+        -DestinationPath "$TempDir\iosevka" `
+        -Force
+
+    Get-ChildItem "$TempDir\iosevka\*.ttf" |
+        Where-Object {
+            $_.Name -match '^IosevkaNerdFontMono-(Regular|Italic|Bold|BoldItalic)\.ttf$'
+        } |
+        ForEach-Object {
+            Install-FontFile $_.FullName
+        }
 }
 
+# ------------------------------------------------------------
 # Sarasa Mono K
+# ------------------------------------------------------------
+
 if ($fonts -match "Sarasa") {
     Write-Host "Sarasa Mono K already installed." -ForegroundColor Green
 }
 else {
     Write-Host "Installing Sarasa Mono K..." -ForegroundColor Yellow
-    scoop install nerd-fonts/SarasaGothic-K
+
+    Ensure-WingetPackage `
+        -Command "7z" `
+        -WingetId "7zip.7zip" `
+        -Name "7-Zip"
+
+    $archive = Join-Path $TempDir "sarasa.7z"
+
+    Invoke-WebRequest `
+        -Uri "https://github.com/be5invis/Sarasa-Gothic/releases/download/v1.0.37/SarasaMono-TTF-1.0.37.7z" `
+        -OutFile $archive
+
+    & 7z x $archive "-o$TempDir\sarasa" -y | Out-Null
+
+    Get-ChildItem "$TempDir\sarasa" -Recurse |
+        Where-Object {
+            $_.Name -match '^SarasaMonoK-(Regular|Italic|Bold|BoldItalic)\.ttf$'
+        } |
+        ForEach-Object {
+            Install-FontFile $_.FullName
+        }
 }
 
-# ------------------------------------------------------------
-# 5. Remove Scoop Font Packages
-# ------------------------------------------------------------
-
-scoop uninstall nerd-fonts/IosevkaTerm-NF-Mono 2>$null
-scoop uninstall nerd-fonts/Iosevka-NF 2>$null
-scoop uninstall nerd-fonts/SarasaGothic-K 2>$null
+Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
 
 # ------------------------------------------------------------
-# 6. Windows Terminal settings.json
+# 4. Windows Terminal
 # ------------------------------------------------------------
 
 $settings = Join-Path $env:LOCALAPPDATA `
@@ -118,8 +217,8 @@ if (Test-Path $settings) {
 
     $exists = $false
 
-    foreach ($s in $json.schemes) {
-        if ($s.name -eq "tokyonight") {
+    foreach ($scheme in $json.schemes) {
+        if ($scheme.name -eq "tokyonight") {
             $exists = $true
         }
     }
@@ -127,6 +226,7 @@ if (Test-Path $settings) {
     if (-not $exists) {
 
         $json.schemes += [PSCustomObject]@{
+            name                = "tokyonight"
             background          = "#1A1B26"
             black               = "#15161E"
             blue                = "#7AA2F7"
@@ -142,7 +242,6 @@ if (Test-Path $settings) {
             cyan                = "#7DCFFF"
             foreground          = "#C0CAF5"
             green               = "#9ECE6A"
-            name                = "tokyonight"
             purple              = "#BB9AF7"
             red                 = "#F7768E"
             selectionBackground = "#33467C"
@@ -160,7 +259,9 @@ if (Test-Path $settings) {
             -Value ([PSCustomObject]@{})
     }
 
-    $json.profiles.defaults.colorScheme = "tokyonight"
+    if (-not $json.profiles.defaults.colorScheme) {
+        $json.profiles.defaults.colorScheme = "tokyonight"
+    }
 
     if (-not $json.profiles.defaults.font) {
         $json.profiles.defaults | Add-Member `
@@ -172,82 +273,55 @@ if (Test-Path $settings) {
     $json.profiles.defaults.font.face =
         "IosevkaTerm Nerd Font, Sarasa Mono K"
 
-    $json | ConvertTo-Json -Depth 10 |
+    $json | ConvertTo-Json -Depth 20 |
         Set-Content $settings -Encoding UTF8
 
     Write-Host "Windows Terminal configured." -ForegroundColor Green
 }
 
 # ------------------------------------------------------------
-# 7. PowerShell Theme
+# 5. PowerShell Theme
 # ------------------------------------------------------------
 
 if (Test-Path $ThemeSrc) {
 
-# Windows PowerShell 5.x
+    # PowerShell 5.x
+    $ps5Dir = Join-Path `
+        ([Environment]::GetFolderPath("MyDocuments")) `
+        "WindowsPowerShell"
 
-$ps5Dir = Join-Path `
-    ([Environment]::GetFolderPath("MyDocuments")) `
-    "WindowsPowerShell"
+    $ps5Profile = Join-Path `
+        $ps5Dir `
+        "Microsoft.PowerShell_profile.ps1"
 
-$ps5Profile = Join-Path $ps5Dir "Microsoft.PowerShell_profile.ps1"
-$ps5Theme   = Join-Path $ps5Dir "tokyonight.ps1"
+    $ps5Theme = Join-Path `
+        $ps5Dir `
+        "tokyonight.ps1"
 
-if (-not (Test-Path $ps5Dir)) {
-    New-Item -ItemType Directory -Path $ps5Dir -Force | Out-Null
-}
+    Ensure-Profile `
+        -Dir $ps5Dir `
+        -ProfilePath $ps5Profile `
+        -ThemeDest $ps5Theme
 
-if (-not (Test-Path $ps5Profile)) {
-    New-Item -ItemType File -Path $ps5Profile -Force | Out-Null
-}
+    # PowerShell 7.x
+    $ps7Dir = Join-Path `
+        ([Environment]::GetFolderPath("MyDocuments")) `
+        "PowerShell"
 
-Copy-Item $ThemeSrc $ps5Theme -Force
+    $ps7Profile = Join-Path `
+        $ps7Dir `
+        "Microsoft.PowerShell_profile.ps1"
 
-$ps5Content = Get-Content $ps5Profile -Raw -ErrorAction SilentlyContinue
-$ps5Line = ". `"$ps5Theme`""
+    $ps7Theme = Join-Path `
+        $ps7Dir `
+        "tokyonight.ps1"
 
-if ($ps5Content -notmatch [regex]::Escape($ps5Theme)) {
-    Add-Content $ps5Profile ""
-    Add-Content $ps5Profile "# dotfile-bootstrap"
-    Add-Content $ps5Profile $ps5Line
-}
+    Ensure-Profile `
+        -Dir $ps7Dir `
+        -ProfilePath $ps7Profile `
+        -ThemeDest $ps7Theme
 
-Write-Host "Windows PowerShell configured." -ForegroundColor Green
-
-
-# PowerShell 7.x
-
-$ps7Dir = Join-Path `
-    ([Environment]::GetFolderPath("MyDocuments")) `
-    "PowerShell"
-
-$ps7Profile = Join-Path $ps7Dir "Microsoft.PowerShell_profile.ps1"
-$ps7Theme   = Join-Path $ps7Dir "tokyonight.ps1"
-
-if (-not (Test-Path $ps7Dir)) {
-    New-Item -ItemType Directory -Path $ps7Dir -Force | Out-Null
-}
-
-if (-not (Test-Path $ps7Profile)) {
-    New-Item -ItemType File -Path $ps7Profile -Force | Out-Null
-}
-
-Copy-Item $ThemeSrc $ps7Theme -Force
-
-$ps7Content = Get-Content $ps7Profile -Raw -ErrorAction SilentlyContinue
-$ps7Line = ". `"$ps7Theme`""
-
-if ($ps7Content -notmatch [regex]::Escape($ps7Theme)) {
-    Add-Content $ps7Profile ""
-    Add-Content $ps7Profile "# dotfile-bootstrap"
-    Add-Content $ps7Profile $ps7Line
-}
-
-Write-Host "PowerShell 7 configured." -ForegroundColor Green
-
-}
-else {
-    Write-Host "Theme file not found." -ForegroundColor Yellow
+    Write-Host "PowerShell theme configured." -ForegroundColor Green
 }
 
 Write-Host ""
