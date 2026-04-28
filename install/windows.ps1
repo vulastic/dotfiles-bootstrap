@@ -64,7 +64,7 @@ scoop bucket add extras 2>$null
 $fonts = Get-ChildItem "$env:WINDIR\Fonts" |
     Select-Object -ExpandProperty Name
 
-if ($fonts -match "Iosevka") {
+if ($fonts -match "IosevkaTerm") {
     Write-Host "IosevkaTerm Nerd Font already installed." `
         -ForegroundColor Green
 }
@@ -72,6 +72,16 @@ else {
     Write-Host "Installing IosevkaTerm Nerd Font..." `
         -ForegroundColor Yellow
     scoop install nerd-fonts/IosevkaTerm-NF-Mono
+}
+
+if ($fonts -match "Iosevka") {
+    Write-Host "Iosevka Nerd Font already installed." `
+        -ForegroundColor Green
+}
+else {
+    Write-Host "Installing Iosevka Nerd Font..." `
+        -ForegroundColor Yellow
+    scoop install nerd-fonts/Iosevka-NF-Mono
 }
 
 if ($fonts -match "Sarasa") {
