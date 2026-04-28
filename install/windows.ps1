@@ -8,8 +8,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot  = Split-Path -Parent $PSScriptRoot
-$ThemeSrc  = Join-Path $RepoRoot "shell\powershell\tokyonight.ps1"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$ThemeSrc = Join-Path $RepoRoot "shell\powershell\tokyonight.ps1"
 
 Write-Host ""
 Write-Host "dotfile-bootstrap Windows Installer" -ForegroundColor Cyan
@@ -59,47 +59,44 @@ else {
 # ------------------------------------------------------------
 
 scoop bucket add nerd-fonts 2>$null
-scoop bucket add extras 2>$null
 
 $fonts = Get-ChildItem "$env:WINDIR\Fonts" |
     Select-Object -ExpandProperty Name
 
+# IosevkaTerm Nerd Font
 if ($fonts -match "IosevkaTerm") {
-    Write-Host "IosevkaTerm Nerd Font already installed." `
-        -ForegroundColor Green
+    Write-Host "IosevkaTerm Nerd Font already installed." -ForegroundColor Green
 }
 else {
-    Write-Host "Installing IosevkaTerm Nerd Font..." `
-        -ForegroundColor Yellow
+    Write-Host "Installing IosevkaTerm Nerd Font..." -ForegroundColor Yellow
     scoop install nerd-fonts/IosevkaTerm-NF-Mono
 }
 
-if ($fonts -match "Iosevka") {
-    Write-Host "Iosevka Nerd Font already installed." `
-        -ForegroundColor Green
+# Iosevka Nerd Font
+if ($fonts -match "Iosevka" -and $fonts -notmatch "IosevkaTerm") {
+    Write-Host "Iosevka Nerd Font already installed." -ForegroundColor Green
 }
 else {
-    Write-Host "Installing Iosevka Nerd Font..." `
-        -ForegroundColor Yellow
-    scoop install nerd-fonts/Iosevka-NF-Mono
+    Write-Host "Installing Iosevka Nerd Font..." -ForegroundColor Yellow
+    scoop install nerd-fonts/Iosevka-NF
 }
 
+# Sarasa Mono K
 if ($fonts -match "Sarasa") {
-    Write-Host "Sarasa Mono K already installed." `
-        -ForegroundColor Green
+    Write-Host "Sarasa Mono K already installed." -ForegroundColor Green
 }
 else {
-    Write-Host "Installing Sarasa Mono K..." `
-        -ForegroundColor Yellow
-    scoop install extras/sarasa-gothic
+    Write-Host "Installing Sarasa Mono K..." -ForegroundColor Yellow
+    scoop install nerd-fonts/SarasaGothic-K
 }
 
 # ------------------------------------------------------------
-# 5. Remove font packages from Scoop
+# 5. Remove Scoop Font Packages
 # ------------------------------------------------------------
 
 scoop uninstall nerd-fonts/IosevkaTerm-NF-Mono 2>$null
-scoop uninstall extras/sarasa-gothic 2>$null
+scoop uninstall nerd-fonts/Iosevka-NF 2>$null
+scoop uninstall nerd-fonts/SarasaGothic-K 2>$null
 
 # ------------------------------------------------------------
 # 6. Windows Terminal settings.json
@@ -130,8 +127,6 @@ if (Test-Path $settings) {
     if (-not $exists) {
 
         $json.schemes += [PSCustomObject]@{
-            name                = "tokyonight"
-            selectionBackground = "#33467C"
             background          = "#1A1B26"
             black               = "#15161E"
             blue                = "#7AA2F7"
@@ -147,14 +142,15 @@ if (Test-Path $settings) {
             cyan                = "#7DCFFF"
             foreground          = "#C0CAF5"
             green               = "#9ECE6A"
+            name                = "tokyonight"
             purple              = "#BB9AF7"
             red                 = "#F7768E"
+            selectionBackground = "#33467C"
             white               = "#A9B1D6"
             yellow              = "#E0AF68"
         }
 
-        Write-Host "Tokyo Night scheme added." `
-            -ForegroundColor Green
+        Write-Host "Tokyo Night scheme added." -ForegroundColor Green
     }
 
     if (-not $json.profiles.defaults) {
@@ -179,8 +175,7 @@ if (Test-Path $settings) {
     $json | ConvertTo-Json -Depth 10 |
         Set-Content $settings -Encoding UTF8
 
-    Write-Host "Windows Terminal configured." `
-        -ForegroundColor Green
+    Write-Host "Windows Terminal configured." -ForegroundColor Green
 }
 
 # ------------------------------------------------------------
@@ -189,19 +184,14 @@ if (Test-Path $settings) {
 
 if (Test-Path $ThemeSrc) {
 
-# ============================================================
 # Windows PowerShell 5.x
-# ============================================================
 
 $ps5Dir = Join-Path `
     ([Environment]::GetFolderPath("MyDocuments")) `
     "WindowsPowerShell"
 
-$ps5Profile = Join-Path `
-    $ps5Dir `
-    "Microsoft.PowerShell_profile.ps1"
-
-$ps5Theme = Join-Path $ps5Dir "tokyonight.ps1"
+$ps5Profile = Join-Path $ps5Dir "Microsoft.PowerShell_profile.ps1"
+$ps5Theme   = Join-Path $ps5Dir "tokyonight.ps1"
 
 if (-not (Test-Path $ps5Dir)) {
     New-Item -ItemType Directory -Path $ps5Dir -Force | Out-Null
@@ -213,9 +203,7 @@ if (-not (Test-Path $ps5Profile)) {
 
 Copy-Item $ThemeSrc $ps5Theme -Force
 
-$ps5Content = Get-Content $ps5Profile -Raw `
-    -ErrorAction SilentlyContinue
-
+$ps5Content = Get-Content $ps5Profile -Raw -ErrorAction SilentlyContinue
 $ps5Line = ". `"$ps5Theme`""
 
 if ($ps5Content -notmatch [regex]::Escape($ps5Theme)) {
@@ -224,23 +212,17 @@ if ($ps5Content -notmatch [regex]::Escape($ps5Theme)) {
     Add-Content $ps5Profile $ps5Line
 }
 
-Write-Host "Windows PowerShell configured." `
-    -ForegroundColor Green
+Write-Host "Windows PowerShell configured." -ForegroundColor Green
 
 
-# ============================================================
 # PowerShell 7.x
-# ============================================================
 
 $ps7Dir = Join-Path `
     ([Environment]::GetFolderPath("MyDocuments")) `
     "PowerShell"
 
-$ps7Profile = Join-Path `
-    $ps7Dir `
-    "Microsoft.PowerShell_profile.ps1"
-
-$ps7Theme = Join-Path $ps7Dir "tokyonight.ps1"
+$ps7Profile = Join-Path $ps7Dir "Microsoft.PowerShell_profile.ps1"
+$ps7Theme   = Join-Path $ps7Dir "tokyonight.ps1"
 
 if (-not (Test-Path $ps7Dir)) {
     New-Item -ItemType Directory -Path $ps7Dir -Force | Out-Null
@@ -252,9 +234,7 @@ if (-not (Test-Path $ps7Profile)) {
 
 Copy-Item $ThemeSrc $ps7Theme -Force
 
-$ps7Content = Get-Content $ps7Profile -Raw `
-    -ErrorAction SilentlyContinue
-
+$ps7Content = Get-Content $ps7Profile -Raw -ErrorAction SilentlyContinue
 $ps7Line = ". `"$ps7Theme`""
 
 if ($ps7Content -notmatch [regex]::Escape($ps7Theme)) {
@@ -263,16 +243,13 @@ if ($ps7Content -notmatch [regex]::Escape($ps7Theme)) {
     Add-Content $ps7Profile $ps7Line
 }
 
-Write-Host "PowerShell 7 configured." `
-    -ForegroundColor Green
+Write-Host "PowerShell 7 configured." -ForegroundColor Green
 
 }
 else {
-    Write-Host "Theme file not found." `
-        -ForegroundColor Yellow
+    Write-Host "Theme file not found." -ForegroundColor Yellow
 }
 
 Write-Host ""
 Write-Host "Installation complete." -ForegroundColor Green
-Write-Host "Restart PowerShell / Windows Terminal." `
-    -ForegroundColor Cyan
+Write-Host "Restart PowerShell / Windows Terminal." -ForegroundColor Cyan

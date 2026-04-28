@@ -32,11 +32,11 @@ This project installs shells, themes, configs, and developer tools with automati
 
 ## Linux / Termux
 
-    curl -fsSL https://raw.githubusercontent.com/yourname/dotfile-bootstrap/main/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/refs/heads/main/install.sh | bash
 
 ## Windows PowerShell
 
-    irm https://raw.githubusercontent.com/yourname/dotfile-bootstrap/main/install.ps1 | iex
+    irm https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/refs/heads/main/install.ps1 | iex
 
 ---
 
