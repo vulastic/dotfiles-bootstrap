@@ -1,3 +1,7 @@
+if status is-interactive
+end
+
+
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 set -gx GHQ_ROOT "$HOME/src"
@@ -12,6 +16,13 @@ if type -q bat
     alias cat 'bat'
 else if type -q batcat
     alias cat 'batcat'
+end
+
+# fzf 미리보기를 위한 bat 별칭 설정
+if type -q bat
+    alias bat 'bat'
+else if type -q batcat
+    alias bat 'batcat'
 end
 
 if type -q rg
@@ -35,13 +46,17 @@ if type -q starship
     starship init fish | source
 end
 
-# Auto-start Zellij if not already inside a session
-if not set -q ZELLIJ
-    if type -q zellij
-        zellij
+# Enable fzf key bindings (Alt+r, Alt+t, etc.)
+if type -q fzf
+    fzf --fish | source
+    if type -q fzf_configure_bindings
+        fzf_configure_bindings --history=\ar --directory=\at
     end
 end
 
-if type -q ghq
-    set -gx GHQ_ROOT "$HOME/src"
+# Load aliases from aliases.fish
+if test -f "$HOME/.config/shell/aliases.fish"
+    source "$HOME/.config/shell/aliases.fish"
 end
+
+

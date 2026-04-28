@@ -1,76 +1,247 @@
-# Dotfiles Bootstrap
+# dotfile-bootstrap
 
-Windows PowerShell과 Linux 계열 환경(Ubuntu, Termux)에서 동일한 작업 흐름을 재현하기 위한 크로스플랫폼 쉘 부트스트랩 프로젝트다.
+Cross-platform bootstrap project for quickly setting up terminal environments on Linux, Windows, and Termux.
 
-## 목표
+This project installs shells, themes, configs, and developer tools with automatic detection and guided setup.
 
-다음 환경에서 최대한 비슷한 사용 경험을 제공한다.
+---
 
-* Windows PowerShell
-* Ubuntu
-* Termux
+# Features
 
-공통 사용자 경험 기준:
+- Linux / Windows / Termux support
+- Auto detect:
+  - OS
+  - Linux distro
+  - Package manager
+  - Current shell
+- Linux install profiles:
+  - Minimal
+  - Full
+- Shell support:
+  - bash
+  - zsh
+  - fish
+  - PowerShell
+- Re-runnable installer
+- Modular structure
+- Easy theme customization
 
-* `tmux` 기반 터미널 워크스페이스
-* `LazyVim` 기반 편집 환경
-* `git`, `fzf`, `ghq`, 디렉터리 점프 도구 사용
-* Tokyo Night 계열 시각 언어
-* Sarasa Mono K, Iosevka Nerd Font 폰트 조합
+---
 
-## 플랫폼별 구성
+# Install
 
-### Windows
+## Linux / Termux
 
-* PowerShell
-* Starship
-* Terminal-Icons
-* zoxide
+    curl -fsSL https://raw.githubusercontent.com/yourname/dotfile-bootstrap/main/install.sh | bash
 
-### Linux / Ubuntu / Termux
+## Windows PowerShell
 
-* fish
-* starship
-* zoxide
-* `eza`로 `ls` 대체
+    irm https://raw.githubusercontent.com/yourname/dotfile-bootstrap/main/install.ps1 | iex
 
-## 공통 도구
+---
 
-* `tmux`
-* `neovim` + `LazyVim`
-* `git`
-* `fzf`
-* `ghq`
-* `bat`
-* `ripgrep`
-* `fd`
+# Linux Install Flow
 
-## 적용 내용
+Installer detects your environment automatically.
 
-* Starship 기반 크로스플랫폼 프롬프트 설정 (Tokyo Night 테마)
-* IosevkaTerm Nerd (우선) 및 Sarasa Monk K 폰트 구성
-* tmux 상단 상태바 테마
-* LazyVim용 Tokyo Night 색상 설정
-* 공통 alias 레이어 (`ls`, `ll`, `la`, `vim`, `cat`, `grep`, `find`)
+Example:
 
-## 참고 사항
+    Detected OS      : Linux
+    Detected Distro  : Ubuntu
+    Package Manager  : apt
+    Detected Shell   : zsh
 
-* 폰트는 플랫폼별 패키지 가용성 차이로 인해 일부 환경에서는 수동 지정이 필요하다.
-* Ubuntu의 `eza`는 외부 저장소를 추가해서 설치한다.
-* 기존 사용자 설정 파일이 있으면 `.bak` 백업을 남긴다.
+Then asks:
 
-## 실행 방법 (GitHub raw)
+    Choose Profile:
+    1) Minimal
+    2) Full
 
-### install.sh (Linux/macOS/WSL)
+Shell setup:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/main/install.sh | bash
-```
+    1) Use detected shell (zsh)
+    2) bash
+    3) zsh
+    4) fish
 
-### install.ps1 (Windows PowerShell)
+---
 
-```powershell
-iex (irm https://raw.githubusercontent.com/vulastic/dotfiles-bootstrap/main/install.ps1)
-```
+# Profiles
 
-> **주의**: 실행 전에 스크립트 내용을 검토하고, 필요한 권한을 갖춘 터미널에서 실행하세요.
+## Minimal
+
+Fast lightweight setup.
+
+Includes:
+
+- git
+- curl
+- wget
+- tmux
+- fzf
+- ripgrep
+
+## Full
+
+Developer workstation setup.
+
+Includes Minimal plus:
+
+- build tools
+- neovim
+- python
+- nodejs
+- fd
+- btop
+- extra utilities
+
+---
+
+# Project Structure
+
+    dotfile-bootstrap/
+    ├── README.md
+    ├── LICENSE
+    │
+    ├── install.sh
+    ├── install.ps1
+    │
+    ├── install/
+    │   ├── common.sh
+    │   ├── linux.sh
+    │   ├── linux-minimal.sh
+    │   ├── linux-full.sh
+    │   ├── termux.sh
+    │   └── windows.ps1
+    │
+    ├── shell/
+    │   ├── bash/
+    │   │   ├── bashrc
+    │   │   └── themes/
+    │   │
+    │   ├── zsh/
+    │   │   ├── zshrc
+    │   │   └── themes/
+    │   │
+    │   ├── fish/
+    │   │   ├── config.fish
+    │   │   ├── functions/
+    │   │   ├── themes/
+    │   │   └── completions/
+    │   │
+    │   └── powershell/
+    │       ├── Microsoft.PowerShell_profile.ps1
+    │       └── themes/
+    │
+    ├── config/
+    │   ├── git/
+    │   ├── tmux/
+    │   ├── nvim/
+    │   ├── starship/
+    │   ├── btop/
+    │   └── other-apps/
+    │
+    ├── assets/
+    │   ├── fonts/
+    │   └── screenshots/
+    │
+    └── backup/
+
+---
+
+# Theme Structure
+
+Themes are separated by purpose.
+
+## Shell Themes
+
+Shell prompt themes belong inside shell folders.
+
+Examples:
+
+    shell/bash/themes/
+    shell/zsh/themes/
+    shell/fish/themes/
+    shell/powershell/themes/
+
+## App Themes
+
+Application themes belong inside config folders.
+
+Examples:
+
+    config/tmux/
+    config/nvim/
+    config/btop/
+    config/starship/
+
+---
+
+# Shell Notes
+
+## bash
+
+Uses:
+
+    ~/.bashrc
+
+Theme loaded with:
+
+    source ~/.dotfiles/shell/bash/themes/tokyo-night.sh
+
+## zsh
+
+Uses:
+
+    ~/.zshrc
+
+## fish
+
+Uses structured config:
+
+    ~/.config/fish/
+
+Includes:
+
+- config.fish
+- functions/
+- themes/
+- completions/
+
+## PowerShell
+
+Uses:
+
+    Microsoft.PowerShell_profile.ps1
+
+---
+
+# Design Philosophy
+
+Keep it simple.
+
+Main folders:
+
+- install/
+- shell/
+- config/
+- assets/
+
+Easy to extend later without clutter.
+
+---
+
+# Future Ideas
+
+- WSL detection
+- macOS support
+- Interactive installer UI
+- Theme selector
+- Backup restore
+- Desktop environment setup
+
+---
+
+# License
+
+MIT

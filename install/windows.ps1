@@ -123,7 +123,7 @@ function Test-FontInstalledWindows {
         $FontName,
         $FontName.Replace(' ', ''),
         $FontName.Replace('Mono K', 'MonoK'),
-        $FontName.Replace('Nerd Font Mono', 'NerdFontMono')
+        $FontName.Replace('Nerd Font', 'NerdFont')
     )
 
     foreach ($pattern in $fontPatterns) {
@@ -165,8 +165,8 @@ function Ensure-FontScoop {
 }
 
 function Ensure-LazyVim {
-    $configHome = Join-Path $HOME '.config'
-    $nvimDir = Join-Path $configHome 'nvim'
+    # Windows Neovim config path is typically %LOCALAPPDATA%\nvim
+    $nvimDir = Join-Path $env:LOCALAPPDATA 'nvim'
 
     if (Test-Path $nvimDir) {
         Write-Step 'Neovim config already exists, skipping LazyVim bootstrap'
@@ -182,8 +182,7 @@ function Ensure-LazyVim {
 }
 
 function Configure-Nvim {
-    $configHome = Join-Path $HOME '.config'
-    $nvimDir = Join-Path $configHome 'nvim'
+    $nvimDir = Join-Path $env:LOCALAPPDATA 'nvim'
 
     if (-not (Test-Path $nvimDir)) {
         return
@@ -206,16 +205,14 @@ Write-Step 'Bootstrapping Windows shell environment'
 Ensure-Scoop
 'main','extras','versions','nerd-fonts' | ForEach-Object { Ensure-ScoopBucket -Name $_ }
 
-'git','pwsh','starship','fzf','zoxide','neovim','eza','bat','fd','ripgrep','ghq','gh','7zip' |
+'git','pwsh','starship','fzf','zoxide','neovim','eza','bat','fd','ripgrep','ghq','gh','7zip','gcc','zellij' |
     ForEach-Object { Ensure-ScoopApp -Name $_ }
-
-Ensure-ScoopApp -Name 'zellij'
 
 Ensure-NuGet
 'Terminal-Icons','PSReadLine','PSFzf' | ForEach-Object { Ensure-PSModule -Name $_ }
 
 Ensure-FontScoop -FontName 'Sarasa Mono K' -ScoopPackage 'SarasaGothic-K'
-Ensure-FontScoop -FontName 'Iosevka Term Nerd Font' -ScoopPackage 'IosevkaTerm-NF-Mono'
+Ensure-FontScoop -FontName 'Iosevka Term Nerd Font' -ScoopPackage 'IosevkaTerm-NF'
 
 Copy-Config -Source (Join-Path $ConfigDir 'starship\starship.toml') -Target (Join-Path $HOME '.config\starship.toml')
     Copy-Config -Source (Join-Path $ConfigDir 'git\gitconfig') -Target (Join-Path $HOME '.gitconfig')
