@@ -1,5 +1,10 @@
-# Windows bootstrap script - Downloads and runs latest version from GitHub
+# Dotfiles Bootstrap Installer for Windows
 $ErrorActionPreference = 'Stop'
+
+# 1. Downloads the latest version of the dotfiles-bootstrap repository from GitHub.
+# 2. Extracts the downloaded ZIP file to a temporary directory.
+# 3. Runs the Windows installer script located in the extracted files.
+# 4. Cleans up the temporary files after installation is complete.
 
 Write-Host "Downloading latest dotfiles-bootstrap from GitHub..." -ForegroundColor Cyan
 
@@ -19,8 +24,7 @@ try {
     $extractedDir = Get-ChildItem -Path $tempDir -Directory | Where-Object { $_.Name -like "dotfiles-bootstrap-*" } | Select-Object -First 1
     
     if (-not $extractedDir) {
-        Write-Error "Failed to extract repository"
-        exit 1
+        throw "Failed to extract repository: Could not find the extracted folder."
     }
     
     # Run the Windows installer from the extracted files
@@ -28,11 +32,14 @@ try {
     if (Test-Path $installerPath) {
         & $installerPath
     } else {
-        Write-Error "Installer not found at $installerPath"
-        exit 1
+        throw "Installer not found at $installerPath"
     }
-} finally {
-    # Clean up temporary directory
+} 
+catch {
+    # Print error message
+    Write-Error $_.Exception.Message
+}
+finally {
     Write-Host "Cleaning up temporary files..." -ForegroundColor Cyan
     Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 }
