@@ -99,14 +99,17 @@ fi
 cp "$THEME_SRC" "$THEME_DST"
 info "Theme installed to $THEME_DST"
 
+
 # ------------------------------------------------------------
 # Bash theme activation
 # ------------------------------------------------------------
-
 THEME_LINE='[ -f "$HOME/.config/themes/tokyonight.sh" ] && source "$HOME/.config/themes/tokyonight.sh"'
 
-if ! grep -Fxq "$THEME_LINE" "$HOME/.bashrc"; then
-    echo "$THEME_LINE" >> "$HOME/.bashrc"
+BASHRC="$HOME/.bashrc"
+touch "$BASHRC"
+
+if ! grep -Fxq "$THEME_LINE" "$BASHRC"; then
+    echo "$THEME_LINE" >> "$BASHRC"
     info "TokyoNight theme added to bashrc"
 fi
 
