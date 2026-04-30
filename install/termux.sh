@@ -22,7 +22,7 @@ fi
 # Package management
 # ------------------------------------------------------------
 info "Updating package index"
-pkg update -y && pkg upgrade -y
+pkg update -y
 
 info "Installing necessary packages"
 pkg install -y \
