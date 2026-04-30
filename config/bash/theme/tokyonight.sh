@@ -26,13 +26,25 @@ if [[ -z "$TN_OS" ]]; then
                 if [[ -r /etc/os-release ]]; then
                     os_id=$(grep -w "^ID" /etc/os-release | cut -d= -f2 | tr -d '"')
                     case "$os_id" in
-                        ubuntu)  TN_OS=" " ;;
-                        debian)  TN_OS=" " ;;
-                        arch)    TN_OS=" " ;;
-                        manjaro) TN_OS=" " ;;
-                        fedora)  TN_OS=" " ;;
-                        nixos)   TN_OS=" " ;;
-                        *)       TN_OS=" " ;;
+                    ubuntu)        TN_OS=" " ;;
+                    debian)        TN_OS=" " ;;
+                    arch)          TN_OS=" " ;;
+                    manjaro)       TN_OS=" " ;;
+                    fedora)        TN_OS=" " ;;
+                    centos)        TN_OS=" " ;;
+                    alpine)        TN_OS=" " ;;
+                    gentoo)        TN_OS=" " ;;
+                    nixos)         TN_OS=" " ;;
+                    opensuse*|suse) TN_OS=" " ;;
+                    pop)           TN_OS=" " ;;
+                    raspbian)      TN_OS=" " ;;
+                    kali)          TN_OS=" " ;;
+                    mint|linuxmint) TN_OS=" " ;;
+                    rocky)         TN_OS=" " ;;
+                    almalinux)     TN_OS=" " ;;
+                    void)          TN_OS=" " ;;
+                    redhat|rhel)   TN_OS="󱄛 " ;;
+                    *)             TN_OS=" " ;;
                     esac
                 else
                     TN_OS=" "
@@ -104,7 +116,7 @@ __tn_prompt_command() {
     [[ -n "$git_info" ]] && plain_left+=" on${git_info}"
 
     # 2. Width Calculation (Virtual width with XX replacement)
-    local virtual_left=$(echo -n "$plain_left" | sed 's/[󰀲󱄛]/XX/g')
+    local virtual_left=$(echo -n "$plain_left" | sed 's/[󰍲󰀷󰀲󱄛]/XX/g')
     local left_len=${#virtual_left}
     
     # Right Alignment Logic
