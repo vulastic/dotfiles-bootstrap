@@ -36,7 +36,14 @@ if [ ! -d "$EXTRACTED_DIR" ]; then
     exit 1
 fi
 
-cd "$EXTRACTED_DIR"
+EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "dotfiles-bootstrap-*")
+
+if [ ! -d "$EXTRACTED_DIR" ]; then
+    echo "ERROR: extraction failed"
+    exit 1
+fi
+
+INSTALL_DIR="$EXTRACTED_DIR/install"
 
 # ------------------------------------------------------------
 # OS detection
