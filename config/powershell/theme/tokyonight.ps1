@@ -51,7 +51,7 @@ function prompt {
     # ----------------------------
     # Current Path
     # ----------------------------
-    $ellipsis = [char]0x2026
+    $ellipsis = "..."
     $path = $pwd.Path
     $repoRoot = $null
 
