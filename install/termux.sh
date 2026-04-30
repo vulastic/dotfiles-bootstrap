@@ -10,6 +10,10 @@ info() {
     echo -e "\e[38;2;255;158;100m$1\e[0m"
 }
 
+warn() {
+    echo -e "\e[38;2;224;175;104m$1\e[0m"
+}
+
 info "Allowing internal storage access"
 if [ ! -d "$HOME/storage" ]; then
     termux-setup-storage
@@ -28,17 +32,6 @@ info "Installing necessary packages"
 pkg install -y \
     openssh tmux git curl wget vim htop procps \
     termux-services ncurses-utils rsync cronie tar gzip unzip
-
-
-# ------------------------------------------------------------
-# Services
-# ------------------------------------------------------------
-info "Enabling sshd service"
-
-if command -v sv >/dev/null; then
-    sv-enable sshd
-    sv up sshd || true
-fi
 
 
 # ------------------------------------------------------------
@@ -118,3 +111,10 @@ fi
 # Completion
 # ------------------------------------------------------------
 info "Termux bootstrap Installation complete!"
+
+echo ""
+warn "Next steps:"
+warn "  sv-enable sshd"
+warn "  sv up sshd"
+warn "  sv status sshd"
+echo ""
