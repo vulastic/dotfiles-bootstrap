@@ -130,26 +130,6 @@ function prompt {
     $time = Get-Date -Format "HH:mm:ss"
 
     # ----------------------------
-    # Width calc
-    # ----------------------------
-    $width = 80
-
-    try {
-        $width = $Host.UI.RawUI.WindowSize.Width
-    } catch {}
-
-    $left = "$osIcon  $user at $hostn in $path"     # 아이콘 2칸 + 공백 1칸 = 3
-    $fill = $width - $left.Length - $time.Length
-
-    if ($git) {
-        $fill -= " on $git".Length
-    }
-
-    if ($fill -lt 1) { $fill = 1 }
-
-    $spaces = " " * $fill
-
-    # ----------------------------
     # First Line
     # ----------------------------
     Write-Host "${blue}${osIcon} ${reset} " -NoNewline
@@ -168,6 +148,19 @@ function prompt {
         Write-Host " ${red}${adminIcon}" -NoNewline
     }
 
+    # ----------------------------
+    # Width calc
+    # ----------------------------
+    $width = 80
+    try {
+        $width = $Host.UI.RawUI.WindowSize.Width
+    } catch {}
+
+    $cursor = $Host.UI.RawUI.CursorPosition.X
+    $fill = $width - $cursor - $time.Length
+    if ($fill -lt 1) { $fill = 1 }
+
+    $spaces = " " * $fill
     Write-Host "${spaces}" -NoNewline
     Write-Host "${gray}${time}"
 
