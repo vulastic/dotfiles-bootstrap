@@ -9,55 +9,85 @@ TN_GREEN='\[\e[38;2;158;206;106m\]'  # #9ece6a
 TN_RED='\[\e[38;2;247;118;142m\]'    # #f7768e
 TN_GRAY='\[\e[38;2;86;95;137m\]'     # #565f89
 TN_WHITE='\[\e[38;2;169;175;246m\]'  # #a9aff6
+TN_PURPLE='\[\e[38;2;187;154;247m\]' # #bb9af7 (primary color)
 TN_RESET='\[\e[0m\]'
+TN_GIT_ICON=''
 TN_ARROW="›"
 
 # OS Detection
 if [[ -z "$TN_OS" ]]; then
-    case "$(uname -s 2>/dev/null)" in
-        MINGW*|MSYS*|CYGWIN*) TN_OS="󰍲 " ;;
-        Darwin*) TN_OS="󰀷 " ;;
-        *)
-            if [[ -r /etc/os-release ]]; then
-                os_id=$(grep -w "^ID" /etc/os-release | cut -d= -f2 | tr -d '"')
-                case "$os_id" in
-                    ubuntu)  TN_OS=" " ;;
-                    debian)  TN_OS=" " ;;
-                    arch)    TN_OS=" " ;;
-                    manjaro) TN_OS=" " ;;
-                    fedora)  TN_OS=" " ;;
-                    nixos)   TN_OS=" " ;;
-                    *)       TN_OS=" " ;;
-                esac
-            else
-                TN_OS=" "
-            fi
-        ;;
-    esac
+    if [[ -d "/data/data/com.termux" || -n "$PREFIX" && "$PREFIX" == *com.termux* ]]; then
+        TN_OS="󰀲 "
+    else
+        case "$(uname -s 2>/dev/null)" in
+            MINGW*|MSYS*|CYGWIN*) TN_OS="󰍲 " ;;
+            Darwin*) TN_OS="󰀷 " ;;
+            *)
+                if [[ -r /etc/os-release ]]; then
+                    os_id=$(grep -w "^ID" /etc/os-release | cut -d= -f2 | tr -d '"')
+                    case "$os_id" in
+                        ubuntu)  TN_OS=" " ;;
+                        debian)  TN_OS=" " ;;
+                        arch)    TN_OS=" " ;;
+                        manjaro) TN_OS=" " ;;
+                        fedora)  TN_OS=" " ;;
+                        nixos)   TN_OS=" " ;;
+                        *)       TN_OS=" " ;;
+                    esac
+                else
+                    TN_OS=" "
+                fi
+            ;;
+        esac
+    fi
 fi
 
 # Path Shortener (Bash logic)
 __tn_path() {
-    local p="${PWD/#$HOME/~}"
+    local p="$PWD"
+    case "$p" in
+        "$HOME"*) p="~${p#$HOME}" ;;
+    esac
+
     if [[ "$p" == "/" ]]; then
         echo "/"
-    else
-        # 슬래시 기준 분리 및 마지막 3개 추출
-        IFS='/' read -ra ADDR <<< "$p"
-        if [[ ${#ADDR[@]} -gt 3 ]]; then
-            echo "…/${ADDR[-3]}/${ADDR[-2]}/${ADDR[-1]}"
-        else
-            echo "$p"
-        fi
+        return
     fi
+
+    if [[ "$p" == "~" ]]; then
+        echo "~"
+        return
+    fi
+
+    p="${p#/}"
+    IFS='/' read -ra ADDR <<< "$p"
+    local last_idx=$((${#ADDR[@]} - 1))
+    if [[ ${#ADDR[@]} -le 3 ]]; then
+        echo "$p"
+        return
+    fi
+
+    echo "…/${ADDR[$last_idx-2]}/${ADDR[$last_idx-1]}/${ADDR[$last_idx]}"
 }
 
 # Git Branch Info
 __tn_git() {
-    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        local branch=$(git branch --show-current 2>/dev/null)
-        [[ -n "$branch" ]] && echo " $branch"
+    # not in git repo → exit
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
+
+    local branch
+
+    # fast + reliable branch detection
+    branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
+
+    # detached HEAD fallback
+    if [[ -z "$branch" ]]; then
+        branch=$(git rev-parse --short HEAD 2>/dev/null)
+        [[ -n "$branch" ]] && branch="detached:${branch}"
     fi
+
+    # icon + output
+    [[ -n "$branch" ]] && echo " $branch"
 }
 
 # Prompt Engine
@@ -74,7 +104,7 @@ __tn_prompt_command() {
     [[ -n "$git_info" ]] && plain_left+=" on${git_info}"
 
     # 2. Width Calculation (Virtual width with XX replacement)
-    local virtual_left=$(echo -n "$plain_left" | sed 's/[󱄛]/XX/g')
+    local virtual_left=$(echo -n "$plain_left" | sed 's/[󰀲󱄛]/XX/g')
     local left_len=${#virtual_left}
     
     # Right Alignment Logic

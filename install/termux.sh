@@ -27,7 +27,7 @@ pkg update -y && pkg upgrade -y
 info "Installing necessary packages"
 pkg install -y \
     openssh tmux git curl wget vim htop procps \
-    termux-services rsync cronie tar gzip unzip
+    termux-services ncurses-utils rsync cronie tar gzip unzip
 
 
 # ------------------------------------------------------------
