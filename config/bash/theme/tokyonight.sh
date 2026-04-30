@@ -1,5 +1,5 @@
 # ==========================================
-# Tokyo Night Bash Prompt (Ported from Zsh)
+# Tokyo Night Bash Prompt
 # ==========================================
 
 # Colors (Bash format: \[ \] is required for correct line wrapping)
@@ -11,7 +11,7 @@ TN_GRAY='\[\e[38;2;86;95;137m\]'     # #565f89
 TN_WHITE='\[\e[38;2;169;175;246m\]'  # #a9aff6
 TN_PURPLE='\[\e[38;2;187;154;247m\]' # #bb9af7 (primary color)
 TN_RESET='\[\e[0m\]'
-TN_GIT_ICON=''
+
 TN_ARROW="›"
 
 # OS Detection
@@ -57,29 +57,50 @@ fi
 # Path Shortener (Bash logic)
 __tn_path() {
     local p="$PWD"
-    case "$p" in
-        "$HOME"*) p="~${p#$HOME}" ;;
-    esac
+    local repo_root repo_name rel work
+    local count last
 
-    if [[ "$p" == "/" ]]; then
-        echo "/"
+    # HOME / ROOT exact
+    [[ "$p" == "$HOME" ]] && { echo "~"; return; }
+    [[ "$p" == "/"     ]] && { echo "/"; return; }
+
+    # Git repo special rule
+    repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ -n "$repo_root" && "$p" == "$repo_root"* ]]; then
+        repo_name=$(basename "$repo_root")
+        rel="${p#$repo_root}"
+        rel="${rel#/}"
+
+        [[ -z "$rel" ]] && { echo ".../$repo_name"; return; }
+
+        IFS='/' read -ra PARTS <<< "$rel"
+        count=${#PARTS[@]}
+
+        if [[ $count -le 2 ]]; then
+            echo ".../$repo_name/$rel"
+        else
+            last=$((count - 1))
+            echo ".../${PARTS[$last-2]}/${PARTS[$last-1]}/${PARTS[$last]}"
+        fi
         return
     fi
 
-    if [[ "$p" == "~" ]]; then
-        echo "~"
-        return
-    fi
+    # HOME child
+    [[ "$p" == "$HOME/"* ]] && p="~${p#$HOME}"
 
-    p="${p#/}"
-    IFS='/' read -ra ADDR <<< "$p"
-    local last_idx=$((${#ADDR[@]} - 1))
-    if [[ ${#ADDR[@]} -le 3 ]]; then
+    # Normal path
+    work="${p#~/}"
+    work="${work#/}"
+
+    IFS='/' read -ra PARTS <<< "$work"
+    count=${#PARTS[@]}
+
+    if [[ $count -le 3 ]]; then
         echo "$p"
-        return
+    else
+        last=$((count - 1))
+        echo ".../${PARTS[$last-2]}/${PARTS[$last-1]}/${PARTS[$last]}"
     fi
-
-    echo "…/${ADDR[$last_idx-2]}/${ADDR[$last_idx-1]}/${ADDR[$last_idx]}"
 }
 
 # Git Branch Info
