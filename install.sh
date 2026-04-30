@@ -2,41 +2,78 @@
 
 set -euo pipefail
 
-# Determine script directory and create temp directory
+# ------------------------------------------------------------
+# Helper
+# ------------------------------------------------------------
+info() {
+    echo -e "\e[38;2;255;158;100m$1\e[0m"
+}
+
+info "Starting bootstrap installer..."
+
+# ------------------------------------------------------------
+# Temp workspace
+# ------------------------------------------------------------
 TEMP_DIR="$(mktemp -d)"
 REPO_URL="https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.tar.gz"
 
-# Cleanup function to remove temp directory on exit
 cleanup() {
     rm -rf "$TEMP_DIR"
 }
 trap cleanup EXIT
 
-# Download and extract the repository
-echo "Downloading latest dotfiles-bootstrap from GitHub..."
+# ------------------------------------------------------------
+# Download repo
+# ------------------------------------------------------------
+info "Downloading repository..."
+
 curl -fsSL "$REPO_URL" | tar -xz -C "$TEMP_DIR"
 
-# Find the extracted directory (should be dotfiles-bootstrap-main)
-EXTRACTED_DIR="$TEMP_DIR/dotfiles-bootstrap-main"
-if [ ! -d "$EXTRACTED_DIR" ]; then
-    # Try alternative naming
-    EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "dotfiles-bootstrap-*" | head -1)
-fi
+EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "dotfiles-bootstrap-*" | head -n 1)
 
 if [ ! -d "$EXTRACTED_DIR" ]; then
-    echo "Error: Failed to extract repository" >&2
+    echo "ERROR: extraction failed"
     exit 1
 fi
 
-# Change to extracted directory and run the appropriate installer
 cd "$EXTRACTED_DIR"
 
-if [ -d "/data/data/com.termux/files/usr" ] || [ -n "${TERMUX_VERSION:-}" ]; then
-  exec bash "$EXTRACTED_DIR/install/termux.sh"
-else
-  exec bash "$EXTRACTED_DIR/install/linux.sh"
+# ------------------------------------------------------------
+# OS detection
+# ------------------------------------------------------------
+IS_TERMUX=false
+
+if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux/files/usr" ]; then
+    IS_TERMUX=true
 fi
 
-# Remove temp directory (handled by trap on EXIT)
-echo "Installation complete!"
-rm -rf "$TEMP_DIR"
+# ------------------------------------------------------------
+# Environment selection (Linux only)
+# ------------------------------------------------------------
+
+if [ "$IS_TERMUX" = true ]; then
+    info "Detected Termux → running automated install"
+    bash "$INSTALL_DIR/termux.sh"
+else
+    echo ""
+    echo "Select environment:"
+    echo "1) Server (default)"
+    echo "2) Development"
+    echo ""
+
+    read -rp "Enter choice [1/2]: " ENV_CHOICE
+    ENV_CHOICE="${ENV_CHOICE:-1}"
+
+    case "$ENV_CHOICE" in
+      2)
+          info "Selected: Development environment"
+          bash "$INSTALL_DIR/linux_development.sh"
+          ;;
+      *)
+          info "Selected: Server environment"
+          bash "$INSTALL_DIR/linux_server.sh"
+          ;;
+    esac
+fi
+
+info "Installation complete!"

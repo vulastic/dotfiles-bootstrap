@@ -5,37 +5,51 @@ set -e
 # ------------------------------------------------------------
 # Helper
 # ------------------------------------------------------------
-
 info() {
     echo -e "\e[38;2;255;158;100m$1\e[0m"
 }
 
-info "Allowing internal storage access"
-termux-setup-storage
-
-
 # ------------------------------------------------------------
-# Package management
+# System update
 # ------------------------------------------------------------
-info "Updating package index"
-pkg update -y && pkg upgrade -y
+info "Updating system packages"
 
-info "Installing necessary packages"
-pkg install -y \
-    openssh tmux git curl wget vim htop procps \
-    termux-services rsync cronie tar gzip unzip
-
-
-# ------------------------------------------------------------
-# Services
-# ------------------------------------------------------------
-info "Enabling sshd service"
-
-if command -v sv >/dev/null; then
-    sv-enable sshd
-    sv up sshd || true
+if command -v apt >/dev/null; then
+    sudo apt update -y && sudo apt upgrade -y
+elif command -v dnf >/dev/null; then
+    sudo dnf upgrade -y
+elif command -v pacman >/dev/null; then
+    sudo pacman -Syu --noconfirm
 fi
 
+# ------------------------------------------------------------
+# Install packages
+# ------------------------------------------------------------
+info "Installing necessary packages"
+
+if command -v apt >/dev/null; then
+    sudo apt install -y \
+        openssh-server tmux git curl wget vim htop procps \
+        rsync cron tar gzip unzip
+elif command -v dnf >/dev/null; then
+    sudo dnf install -y \
+        openssh-server tmux git curl wget vim htop procps-ng \
+        rsync cronie tar gzip unzip
+elif command -v pacman >/dev/null; then
+    sudo pacman -S --noconfirm \
+        openssh tmux git curl wget vim htop procps-ng \
+        rsync cronie tar gzip unzip
+fi
+
+# ------------------------------------------------------------
+# Enable SSH service (systemd)
+# ------------------------------------------------------------
+info "Enabling SSH service"
+
+if command -v systemctl >/dev/null; then
+    sudo systemctl enable ssh || sudo systemctl enable sshd
+    sudo systemctl start ssh || sudo systemctl start sshd
+fi
 
 # ------------------------------------------------------------
 # Paths
@@ -43,15 +57,14 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# ------------------------------------------------------------
+# tmux config install
+# ------------------------------------------------------------
+info "Installing tmux configuration"
 
-# ------------------------------------------------------------
-# tmux config
-# ------------------------------------------------------------
 TMUX_SRC="$REPO_ROOT/config/tmux/tmux.conf"
 TMUX_DIR="$HOME/.config/tmux"
 TMUX_DST="$TMUX_DIR/tmux.conf"
-
-info "Installing tmux configuration"
 
 if [ ! -f "$TMUX_SRC" ]; then
     echo "ERROR: tmux config not found: $TMUX_SRC"
@@ -63,24 +76,23 @@ mkdir -p "$TMUX_DIR"
 if [ -f "$TMUX_DST" ]; then
     BACKUP="$TMUX_DST.bak.$(date +%Y%m%d%H%M%S)"
     cp "$TMUX_DST" "$BACKUP"
-    info "Existing tmux config backed up: $BACKUP"
+    info "Backed up existing tmux config"
 fi
 
 cp "$TMUX_SRC" "$TMUX_DST"
-info "tmux config installed to $TMUX_DST"
-
+info "tmux config installed"
 
 # ------------------------------------------------------------
-# theme
+# theme install
 # ------------------------------------------------------------
+info "Installing tokyonight theme"
+
 THEME_SRC="$REPO_ROOT/config/bash/theme/tokyonight.sh"
 THEME_DIR="$HOME/.config/themes"
 THEME_DST="$THEME_DIR/tokyonight.sh"
 
-info "Installing tokyonight theme"
-
 if [ ! -f "$THEME_SRC" ]; then
-    echo "ERROR: theme source not found: $THEME_SRC"
+    echo "ERROR: theme not found: $THEME_SRC"
     exit 1
 fi
 
@@ -89,10 +101,13 @@ mkdir -p "$THEME_DIR"
 if [ -f "$THEME_DST" ]; then
     BACKUP="$THEME_DST.bak.$(date +%Y%m%d%H%M%S)"
     cp "$THEME_DST" "$BACKUP"
-    info "Existing theme backed up: $BACKUP"
+    info "Backed up existing theme"
 fi
 
 cp "$THEME_SRC" "$THEME_DST"
-info "Theme installed to $THEME_DST"
+info "Theme installed"
 
-info "Installation complete!"
+# ------------------------------------------------------------
+# Completion
+# ------------------------------------------------------------
+info "Linux bootstrap installation complete!"
