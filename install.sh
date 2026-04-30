@@ -76,4 +76,4 @@ else
     esac
 fi
 
-info "Installation complete!"
+info "Installation complete! please restart your terminal to see the changes"
