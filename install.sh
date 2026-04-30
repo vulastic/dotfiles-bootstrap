@@ -6,7 +6,7 @@ set -euo pipefail
 # Helper
 # ------------------------------------------------------------
 info() {
-    echo -e "\e[38;2;255;158;100m$1\e[0m"
+    echo -e "\e[38;2;187;154;247m$1\e[0m"
 }
 
 info "Starting bootstrap installer..."
