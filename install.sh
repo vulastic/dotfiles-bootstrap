@@ -61,7 +61,7 @@ else
     echo "2) Development"
     echo ""
 
-    read -rp "Enter choice [1/2]: " ENV_CHOICE
+    read -rp "Enter choice [1/2]: " ENV_CHOICE < /dev/tty
     ENV_CHOICE="${ENV_CHOICE:-1}"
 
     case "$ENV_CHOICE" in
