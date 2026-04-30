@@ -31,14 +31,7 @@ curl -fsSL "$REPO_URL" | tar -xz -C "$TEMP_DIR"
 
 EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "dotfiles-bootstrap-*" | head -n 1)
 
-if [ ! -d "$EXTRACTED_DIR" ]; then
-    echo "ERROR: extraction failed"
-    exit 1
-fi
-
-EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "dotfiles-bootstrap-*")
-
-if [ ! -d "$EXTRACTED_DIR" ]; then
+if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
     echo "ERROR: extraction failed"
     exit 1
 fi
