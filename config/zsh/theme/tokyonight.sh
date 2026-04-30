@@ -13,7 +13,7 @@ TN_PURPLE='%F{#bb9af7}'
 TN_GRAY='%F{#565f89}'
 TN_WHITE='%F{#a9aff6}'
 TN_RESET='%f'
-
+TN_GIT_ICON=''
 TN_ARROW="›"
 
 # ==========================================
