@@ -11,7 +11,11 @@ info() {
 }
 
 info "Allowing internal storage access"
-termux-setup-storage
+if [ ! -d "$HOME/storage" ]; then
+    termux-setup-storage
+else
+    echo "Storage already configured → skipping"
+fi
 
 
 # ------------------------------------------------------------
