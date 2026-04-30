@@ -99,4 +99,19 @@ fi
 cp "$THEME_SRC" "$THEME_DST"
 info "Theme installed to $THEME_DST"
 
-info "Installation complete!"
+# ------------------------------------------------------------
+# Bash theme activation
+# ------------------------------------------------------------
+
+THEME_LINE='[ -f "$HOME/.config/themes/tokyonight.sh" ] && source "$HOME/.config/themes/tokyonight.sh"'
+
+if ! grep -Fxq "$THEME_LINE" "$HOME/.bashrc"; then
+    echo "$THEME_LINE" >> "$HOME/.bashrc"
+    info "TokyoNight theme added to bashrc"
+fi
+
+
+# ------------------------------------------------------------
+# Completion
+# ------------------------------------------------------------
+info "Termux bootstrap Installation complete!"
