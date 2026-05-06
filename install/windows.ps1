@@ -96,14 +96,12 @@ else {
 # Add Scoop buckets
 Write-Step "Adding Scoop buckets..."
 
-scoop bucket add main
-if ($LASTEXITCODE -ne 0) { throw "Failed to add main bucket" }
+# refresh PATH for current session
+$env:Path += ";$HOME\scoop\shims"
 
-scoop bucket add extras
-if ($LASTEXITCODE -ne 0) { throw "Failed to add extras bucket" }
-
-scoop bucket add nerd-fonts
-if ($LASTEXITCODE -ne 0) { throw "Failed to add nerd-fonts bucket" }
+Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add main"
+Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add extras"
+Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add nerd-fonts"
 
 Write-Ok "Scoop Buckets ready."
 
