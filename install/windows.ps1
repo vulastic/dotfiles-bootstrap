@@ -77,7 +77,7 @@ if (Test-Command scoop) {
 else {
     Write-Info "Installing Scoop..."
 
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+    Set-ExecutionPolicy Bypass -Scope Process -Force
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
