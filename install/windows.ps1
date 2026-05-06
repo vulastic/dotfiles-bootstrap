@@ -93,17 +93,6 @@ else {
     Write-Ok "Scoop installed."
 }
 
-# Add Scoop buckets
-Write-Step "Adding Scoop buckets..."
-
-& "$HOME\scoop\shims\scoop.ps1" update
-
-scoop bucket add main
-scoop bucket add extras
-scoop bucket add nerd-fonts
-
-Write-Ok "Scoop Buckets ready."
-
 
 # ------------------------------------------------------------
 # 3. Install Packages (git, Starship)   
@@ -127,6 +116,20 @@ foreach ($pkg in $Packages) {
         Write-Info "$pkg already installed."
     }
 }
+
+
+# ------------------------------------------------------------
+# Add Scoop buckets (main, extras, nerd-fonts)
+# ------------------------------------------------------------
+Write-Step "Adding Scoop buckets..."
+
+& "$HOME\scoop\shims\scoop.ps1" update
+
+scoop bucket add main
+scoop bucket add extras
+scoop bucket add nerd-fonts
+
+Write-Ok "Scoop Buckets ready."
 
 
 # ------------------------------------------------------------
