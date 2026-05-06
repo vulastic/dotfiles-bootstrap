@@ -1,6 +1,8 @@
 # Dotfiles Bootstrap Installer for Windows
 $ErrorActionPreference = 'Stop'
 
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+
 # 1. Downloads the latest version of the dotfiles-bootstrap repository from GitHub.
 # 2. Extracts the downloaded ZIP file to a temporary directory.
 # 3. Runs the Windows installer script located in the extracted files.

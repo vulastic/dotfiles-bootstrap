@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-
 # ------------------------------------------------------------
 # Helper
 # ------------------------------------------------------------
