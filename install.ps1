@@ -9,32 +9,40 @@ $ErrorActionPreference = 'Stop'
 Write-Host "Downloading latest dotfiles-bootstrap from GitHub..." -ForegroundColor Cyan
 
 # Create temporary directory
-$tempDir = Join-Path $env:TEMP "dotfiles-bootstrap-$(Get-Random)"
-if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force }
+$tempDir = Join-Path $env:TEMP "dotfiles-bootstrap"
+Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $tempDir | Out-Null
 
 try {
     # Download and extract the repository
-    $zipPath = Join-Path $tempDir "dotfiles-bootstrap.zip"
-    Invoke-WebRequest -Uri "https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.zip" -OutFile $zipPath -UseBasicParsing
+    $zipPath = Join-Path $tempDir "repo.zip"
+
+    Invoke-WebRequest `
+        -Uri "https://github.com/vulastic/dotfiles-bootstrap/archive/refs/heads/main.zip" `
+        -OutFile $zipPath
     
     Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
     
     # Determine the extracted folder name
-    $extractedDir = Get-ChildItem -Path $tempDir -Directory | Where-Object { $_.Name -like "dotfiles-bootstrap-*" } | Select-Object -First 1
+    $repoRoot = Get-ChildItem $tempDir -Directory | Where-Object {
+        $_.Name -like "dotfiles-bootstrap-main"
+    } | Select-Object -First 1
     
-    if (-not $extractedDir) {
-        throw "Failed to extract repository: Could not find the extracted folder."
+    if (-not $repoRoot) {
+        throw "Repository folder not found after extraction."
     }
     
     # Run the Windows installer from the extracted files
-    $installerPath = Join-Path $extractedDir.FullName "install\windows.ps1"
-    if (Test-Path $installerPath) {
-        & $installerPath
-    } else {
-        throw "Installer not found at $installerPath"
+    $installerPath = Join-Path $repoRoot.FullName "install\windows.ps1"
+    if (-not (Test-Path $installerPath)) {
+        throw "Installer not found: $installerPath"
     }
-} 
+
+    Write-Host "Running installer..." -ForegroundColor Green
+    & powershell -ExecutionPolicy Bypass -File $installerPath
+    
+    Write-Host "Bootstrap complete!" -ForegroundColor Green
+}
 catch {
     # Print error message
     Write-Error $_.Exception.Message
@@ -43,5 +51,3 @@ finally {
     Write-Host "Cleaning up temporary files..." -ForegroundColor Cyan
     Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 }
-
-Write-Host "Bootstrap complete!" -ForegroundColor Green
