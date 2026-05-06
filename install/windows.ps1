@@ -2,289 +2,262 @@
 # dotfiles-bootstrap Windows Installer
 # ------------------------------------------------------------
 
-$ErrorActionPreference = "Stop"
+# Step 1. Install PowerShell 7 via Winget
+# Step 2. Install Scoop
+# Step 3. Install Packages (git, Starship)
+# Step 4. Download Nerd Fonts via Scoop, extract, and selective install to Windows Fonts (remove after installation)
+# Step 5. Configuration Windows Terminal
+# Step 6. Setup PowerShell Profile using starship
+# Note: When the progress meets an error, clean up the temp directory and exit with error code
 
-# ------------------------------------------------------------
-# Paths
-# ------------------------------------------------------------
-
-$RepoRoot   = Split-Path -Parent $PSScriptRoot
-$ConfigRoot = Join-Path $RepoRoot "config"
-
-$ThemeFile = "tokyonight.ps1"
-$ThemeSrc  = Join-Path $ConfigRoot "powershell\theme\$ThemeFile"
-$WtSource  = Join-Path $ConfigRoot "windows-terminal\settings.json"
-
-$TempDir = Join-Path $env:TEMP "dotfiles-bootstrap"
-
-$GitRoot = Join-Path $env:LOCALAPPDATA "mingit"
-$GitCmd  = Join-Path $GitRoot "cmd"
-
-$SevenZipExe = Join-Path $TempDir "7zr.exe"
-
-# ------------------------------------------------------------
-# Download URLs
-# ------------------------------------------------------------
-
-$mingitApiUrl = "https://api.github.com/repos/git-for-windows/git/releases/latest"
-$7zipUrl = "https://github.com/ip7z/7zip/releases/download/26.01/7zr.exe"
-
-$iosevkaTermUrl = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/IosevkaTerm.zip"
-$iosevkaUrl = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/Iosevka.zip"
-$sarasaUrl = "https://github.com/be5invis/Sarasa-Gothic/releases/download/v1.0.37/SarasaMono-TTF-Unhinted-1.0.37.7z"
 
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
+function Write-Info($msg)   { Write-Host "[INFO] $msg" -ForegroundColor Blue }
+function Write-Ok($msg)     { Write-Host "[OK] $msg" -ForegroundColor Green }
+function Write-Warn($msg)   { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
+function Write-Err($msg)    { Write-Host "[ERROR] $msg" -ForegroundColor Red }
+function Write-Header($msg) { Write-Host "=== $msg ===" -ForegroundColor Magenta }
+function Write-Step($msg)   { Write-Host "==> $msg" -ForegroundColor Cyan }
 
-function Write-Step {
-    param([string]$Text)
-
-    Write-Host ""
-    Write-Host $Text -ForegroundColor Yellow
+function Test-Command($name) {
+    return [bool](Get-Command $name -ErrorAction SilentlyContinue)
 }
 
-function Ensure-Directory {
-    param([string]$Path)
-
-    if (-not (Test-Path $Path)) {
-        New-Item -ItemType Directory -Path $Path -Force | Out-Null
+function Ensure-Directory($path) {
+    if (-not (Test-Path $path)) {
+        New-Item -ItemType Directory -Path $path -Force | Out-Null
     }
 }
 
-function Download-File {
-    param(
-        [string]$Url,
-        [string]$OutFile
-    )
-
-    if (Test-Path $OutFile) {
-        Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
-    }
-
-    Invoke-WebRequest `
-        -Uri $Url `
-        -OutFile $OutFile
-
-    Write-Host "Downloaded: $(Split-Path $OutFile -Leaf)" -ForegroundColor Green
-}
-
-function Install-FontFile {
-    param([string]$FontPath)
-
-    Write-Host "Installing font: $(Split-Path $FontPath -Leaf)"
-
-    $Shell = New-Object -ComObject Shell.Application
-    $Fonts = $Shell.Namespace(0x14)
-    $Fonts.CopyHere($FontPath)
-}
 
 # ------------------------------------------------------------
-# Start
-# ------------------------------------------------------------
 
-Write-Host ""
-Write-Host "dotfiles-bootstrap Windows Installer" -ForegroundColor Cyan
+$ErrorActionPreference = "Stop"
 
-Ensure-Directory $TempDir
+Write-Header "Starting dotfiles-bootstrap Windows Installer..."
 
-try {
+$RepoRoot   = Split-Path -Parent $PSScriptRoot
 
 # ------------------------------------------------------------
-# 1. PowerShell 7
+# 1. Install PowerShell 7 via Winget
 # ------------------------------------------------------------
 
 Write-Step "Checking PowerShell 7..."
 
-$pwshInstalled = winget list --id Microsoft.PowerShell 2>$null
+if (Test-Command pwsh) {
 
-if ($pwshInstalled -match "Microsoft.PowerShell") {
-
-    Write-Host "PowerShell 7 already installed." -ForegroundColor Green
+    Write-Ok "PowerShell 7 already installed."
 }
 else {
 
-    Write-Host "Installing PowerShell 7..."
+    Write-Info "Installing PowerShell 7..."
 
-    winget install `
-        --id Microsoft.PowerShell `
-        -e `
-        --accept-package-agreements `
-        --accept-source-agreements | Out-Null
+    winget install --id Microsoft.PowerShell -e --accept-package-agreements --accept-source-agreements | Out-Null
+
+    if (-not (Test-Command pwsh)) {
+        Write-Err "PowerShell 7 installation failed."
+        exit 1
+    }
+
+    Write-Ok "PowerShell 7 installed."
 }
 
+
 # ------------------------------------------------------------
-# 2. Git (MinGit)
+# 2. Install Scoop
 # ------------------------------------------------------------
 
-Write-Step "Checking Git..."
+Write-Step "Checking Scoop..."
 
-$gitExists = $false
-
-try {
-    git --version | Out-Null
-    $gitExists = $true
-}
-catch {}
-
-if ($gitExists) {
-
-    Write-Host "Git already installed." -ForegroundColor Green
+if (Test-Command scoop) {
+    Write-Ok "Scoop already installed."
 }
 else {
+    Write-Info "Installing Scoop..."
 
-    Write-Host "Installing MinGit..."
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+    Invoke-RestMethod get.scoop.sh | Invoke-Expression
 
-    $release = Invoke-RestMethod $mingitApiUrl
-
-    $asset = $release.assets |
-        Where-Object { $_.name -match "MinGit.*64-bit\.zip" } |
-        Select-Object -First 1
-
-    if (-not $asset) {
-        throw "MinGit release asset not found."
+    if (-not (Test-Command scoop)) {
+        Write-Err "Scoop installation failed."
+        exit 1
     }
 
-    $gitZip = Join-Path $TempDir "mingit.zip"
-
-    Download-File `
-        -Url $asset.browser_download_url `
-        -OutFile $gitZip
-
-    if (Test-Path $GitRoot) {
-        Remove-Item $GitRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    Expand-Archive `
-        -Path $gitZip `
-        -DestinationPath $GitRoot `
-        -Force
-
-    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-
-    if ($userPath -notlike "*$GitCmd*") {
-
-        if ([string]::IsNullOrWhiteSpace($userPath)) {
-            $newPath = $GitCmd
-        }
-        else {
-            $newPath = "$userPath;$GitCmd"
-        }
-
-        [Environment]::SetEnvironmentVariable(
-            "Path",
-            $newPath,
-            "User"
-        )
-    }
-
-    $env:Path =
-        [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
-        [Environment]::GetEnvironmentVariable("Path","User")
-
-    Write-Host "MinGit installed." -ForegroundColor Green
+    Write-Ok "Scoop installed."
 }
 
+# Add Scoop buckets
+Write-Step "Adding Scoop buckets..."
+scoop bucket add main  *> $null
+scoop bucket add extras *> $null
+scoop bucket add nerd-fonts *> $null
+
+Write-Ok "Scoop Buckets ready."
+
+
 # ------------------------------------------------------------
-# 3. Fonts
+# 3. Install Packages (git, Starship)   
 # ------------------------------------------------------------
 
-$fonts = @(
-    @{
-        Name = "IosevkaTerm Nerd Font"
-        Url  = $iosevkaTermUrl
-        File = Join-Path $TempDir "iosevka-term.zip"
-        Out  = Join-Path $TempDir "iosevka-term"
-        Type = "zip"
-    },
-    @{
-        Name = "Iosevka Nerd Font Mono"
-        Url  = $iosevkaUrl
-        File = Join-Path $TempDir "iosevka.zip"
-        Out  = Join-Path $TempDir "iosevka"
-        Type = "zip"
-    },
-    @{
-        Name = "Sarasa Mono K"
-        Url  = $sarasaUrl
-        File = Join-Path $TempDir "sarasa.7z"
-        Out  = Join-Path $TempDir "sarasa"
-        Type = "7z"
-    }
+Write-Step "Installing packages (git, Starship)..."
+
+$Packages = @(
+    "git",
+    "starship"
 )
 
-Write-Step "Downloading fonts..."
-
-foreach ($f in $fonts) {
-
-    Write-Host "Downloading $($f.Name)..."
-
-    Download-File `
-        -Url $f.Url `
-        -OutFile $f.File
-}
-
-# ------------------------------------------------------------
-# 4. Install Fonts
-# ------------------------------------------------------------
-
-Write-Step "Installing fonts..."
-
-foreach ($f in $fonts) {
-
-    Ensure-Directory $f.Out
-
-    Write-Host "Extracting $($f.Name)..."
-
-    if ($f.Type -eq "zip") {
-
-        Expand-Archive `
-            -Path $f.File `
-            -DestinationPath $f.Out `
-            -Force
+foreach ($pkg in $Packages) {
+    Write-Info "Installing $pkg ..."
+    
+    if (-not (scoop list | Select-String "^$pkg ")) {
+        scoop install $pkg
+        Write-Ok "$pkg installed."
     }
     else {
-
-        if (-not (Test-Path $SevenZipExe)) {
-
-            Write-Step "Downloading portable 7zr.exe..."
-
-            Download-File `
-                -Url $7zipUrl `
-                -OutFile $SevenZipExe
-        }
-
-        & $SevenZipExe x $f.File "-o$($f.Out)" -y | Out-Null
-    }
-
-    Get-ChildItem $f.Out -Recurse -Filter *.ttf |
-    Where-Object {
-        $_.BaseName -match '^(IosevkaTermNerdFont|IosevkaNerdFontMono|SarasaMonoK)-(Regular|Italic|Bold|BoldItalic)$'
-    } |
-    ForEach-Object {
-        Install-FontFile $_.FullName
+        Write-Info "$pkg already installed."
     }
 }
 
+
 # ------------------------------------------------------------
-# 5. Windows Terminal
+# 4. Download Nerd Fonts via Scoop, extract, and selective install to Windows Fonts (remove after installation)
+# ------------------------------------------------------------
+
+Write-Step "Installing Nerd Fonts (Iosevka Nerd Term, Iosevka Nerd Mono, Sarasa Mono K)"
+
+$FontPackages = @(
+    "Iosevka-NF",
+    "IosevkaTerm-NF-Mono",
+    "SarasaGothic-K"
+)
+
+$Pattern = '^(IosevkaTermNerdFont|IosevkaNerdFontMono|SarasaMonoK)-(Regular|Italic|Bold|BoldItalic)$'
+
+$TempRoot = Join-Path $env:TEMP "font-install-temp"
+$CacheDir = Join-Path $env:USERPROFILE "scoop\cache"
+
+Ensure-Directory $TempRoot
+
+try {
+    # Download font packages vis scoop to cache directory
+    foreach ($pkg in $FontPackages) {
+        Write-Info "Downloading $pkg via Scoop..."
+        scoop download $pkg
+    }
+
+    # Find archives in scoop cache
+    $Archives = Get-ChildItem $CacheDir -File | Where-Object {
+        $_.Name -match 'Iosevka.*\.zip|Sarasa.*\.7z'
+    }
+
+    $Shell = New-Object -ComObject Shell.Application
+    $FontFolder = $Shell.Namespace(0x14)
+
+# Ensure 7z if needed
+$Has7z = @($Archives | Where-Object { $_.Extension -eq ".7z" })
+
+if ($Has7z.Count -gt 0) {
+
+    if (-not (Test-Command 7z)) {
+        Write-Info "Installing 7zip..."
+        scoop install 7zip
+    }
+
+    $cmd = Get-Command 7z -ErrorAction SilentlyContinue
+
+    if (-not $cmd) {
+        throw "7z installation failed or not found in PATH."
+    }
+
+    $SevenZipExe = $cmd.Source
+}
+
+    foreach ($a in $Archives) {
+        $ExtractDir = Join-Path $TempRoot $a.BaseName
+        Ensure-Directory $ExtractDir
+
+        Write-Info "Extracting $($a.Name) to $ExtractDir..."
+
+	if ($a.Extension -eq ".zip") {
+
+		Expand-Archive `
+			-Path $a.FullName `
+			-DestinationPath $ExtractDir `
+			-Force
+	}
+
+	elseif ($a.Extension -eq ".7z") {
+		
+        	& $SevenZipExe x $a.FullName "-o$ExtractDir" -y | Out-Null
+	}
+	else {
+		Write-Warn "Unknown archive format: $($a.Name)"
+	}
+
+        # Install selected fonts only
+        $FontFiles = Get-ChildItem $ExtractDir -Recurse -Filter *.ttf
+
+        foreach ($f in $FontFiles) {
+
+            if ($f.BaseName -match $Pattern) {
+
+                $targetPath = Join-Path "C:\Windows\Fonts" $f.Name
+
+                if (-not (Test-Path $targetPath)) {
+                    Write-Info "Installing font: $($f.Name)..."
+                    $FontFolder.CopyHere($f.FullName, 0x10)
+                }
+                else {
+                    Write-Info "Skipping already installed font: $($f.Name)"
+                }
+            }
+        }
+    }
+
+    # Remove downloaded scoop font packages from cache
+    foreach ($pkg in $FontPackages) {
+        Write-Info "Cleaning up Scoop cache for $pkg..."
+        scoop cache rm $pkg
+    }
+
+    Write-Ok "Nerd Fonts installed."
+}
+finally {
+    # Clean up temp directory
+    if (Test-Path $TempRoot) {
+        Write-Info "Cleaning up temporary files..."
+        Remove-Item $TempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+
+# ------------------------------------------------------------
+# 5. Configuration Windows Terminal
 # ------------------------------------------------------------
 
 Write-Step "Configuring Windows Terminal..."
+
+$wtSource  = Join-Path $RepoRoot "config\windows-terminal\settings.json"
 
 $wtDest = Join-Path `
 $env:LOCALAPPDATA `
 "Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
 
-if (Test-Path $WtSource) {
-    Copy-Item $WtSource $wtDest -Force
+if (Test-Path (Split-Path $wtDest)) {
+    Copy-Item $wtSource $wtDest -Force
+    Write-Ok "Windows Terminal configured."
+}
+else {
+    Write-Warn "Windows Terminal not found. Skipping config."
 }
 
 # ------------------------------------------------------------
-# 6. PowerShell Profiles
+# 6. Setup PowerShell Profile using starship
 # ------------------------------------------------------------
 
-Write-Step "Configuring PowerShell profiles..."
+Write-Step "Setting up PowerShell profile with Starship..."
 
 $doc = Join-Path $HOME "Documents"
 
@@ -294,17 +267,23 @@ $ps7Profile = Join-Path $doc "PowerShell\Microsoft.PowerShell_profile.ps1"
 $ps5Dir = Split-Path $ps5Profile -Parent
 $ps7Dir = Split-Path $ps7Profile -Parent
 
-# theme destination folder
-$themeDir  = Join-Path $ps7Dir "theme"
-$themeDest = Join-Path $themeDir "tokyonight.ps1"
+# Starship config
+$starshipSrc = Join-Path $RepoRoot "config\starship\starship.toml"
+$starshipDir = Join-Path $HOME ".config\starship"
+$starshipDest = Join-Path $starshipDir "starship.toml"
 
-$line = ". `"$themeDest`""
+# profile lines
+$envLine  = '$env:STARSHIP_CONFIG = "$HOME\.config\starship\starship.toml"'
+$initLine = 'Invoke-Expression (& starship init powershell)'
 
 Ensure-Directory $ps5Dir
 Ensure-Directory $ps7Dir
-Ensure-Directory $themeDir
+Ensure-Directory $starshipDir
 
-Copy-Item $ThemeSrc $themeDest -Force
+# copy config
+if (Test-Path $starshipSrc) {
+    Copy-Item $starshipSrc $starshipDest -Force
+}
 
 foreach ($profileFile in @($ps5Profile, $ps7Profile)) {
 
@@ -315,32 +294,20 @@ foreach ($profileFile in @($ps5Profile, $ps7Profile)) {
     $exists = Select-String `
         -Path $profileFile `
         -SimpleMatch `
-        -Pattern $line `
+        -Pattern $initLine `
         -Quiet `
         -ErrorAction SilentlyContinue
 
     if (-not $exists) {
         Add-Content $profileFile ""
-        Add-Content $profileFile "# dotfiles-bootstrap"
-        Add-Content $profileFile $line
+        Add-Content $profileFile "# dotfiles-bootstrap (starship)"
+        Add-Content $profileFile $envLine
+        Add-Content $profileFile $initLine
     }
 }
 
-Write-Host ""
-Write-Host "Setup complete." -ForegroundColor Green
-Write-Host "Restart terminal recommended." -ForegroundColor Cyan
+Write-Ok "PowerShell profiles configured with Starship."
 
-}
-finally {
+# ------------------------------------------
 
-    if (Test-Path $TempDir) {
-
-        Write-Step "Cleaning temporary files..."
-
-        Remove-Item `
-            $TempDir `
-            -Recurse `
-            -Force `
-            -ErrorAction SilentlyContinue
-    }
-}
+Write-Header "Complete windows configuration. You may need to restart Windows Terminal or PowerShell to see the changes."
