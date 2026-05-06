@@ -78,8 +78,13 @@ else {
     Write-Info "Installing Scoop..."
 
     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-    Invoke-RestMethod get.scoop.sh | Invoke-Expression
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    Invoke-Expression (
+        Invoke-WebRequest -UseBasicParsing -Uri "https://get.scoop.sh").Content
+
+    
     if (-not (Test-Command scoop)) {
         Write-Err "Scoop installation failed."
         exit 1
