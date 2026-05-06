@@ -95,9 +95,15 @@ else {
 
 # Add Scoop buckets
 Write-Step "Adding Scoop buckets..."
-scoop bucket add main  *> $null
-scoop bucket add extras *> $null
-scoop bucket add nerd-fonts *> $null
+
+scoop bucket add main
+if ($LASTEXITCODE -ne 0) { throw "Failed to add main bucket" }
+
+scoop bucket add extras
+if ($LASTEXITCODE -ne 0) { throw "Failed to add extras bucket" }
+
+scoop bucket add nerd-fonts
+if ($LASTEXITCODE -ne 0) { throw "Failed to add nerd-fonts bucket" }
 
 Write-Ok "Scoop Buckets ready."
 
