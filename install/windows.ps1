@@ -96,12 +96,11 @@ else {
 # Add Scoop buckets
 Write-Step "Adding Scoop buckets..."
 
-# refresh PATH for current session
-$env:Path += ";$HOME\scoop\shims"
+& "$HOME\scoop\shims\scoop.ps1" update
 
-Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add main"
-Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add extras"
-Start-Process powershell -ArgumentList "-NoExit", "-Command scoop bucket add nerd-fonts"
+scoop bucket add main
+scoop bucket add extras
+scoop bucket add nerd-fonts
 
 Write-Ok "Scoop Buckets ready."
 
