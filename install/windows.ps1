@@ -36,10 +36,6 @@ function Ensure-Directory($path) {
 
 $ErrorActionPreference = "Stop"
 
-if ((Get-ExecutionPolicy -Scope CurrentUser) -eq "Restricted") {
-    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-}
-
 Write-Header "Starting dotfiles-bootstrap Windows Installer..."
 
 $RepoRoot   = Split-Path -Parent $PSScriptRoot
