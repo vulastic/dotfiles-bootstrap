@@ -190,9 +190,6 @@ disabled = true
 [memory_usage]
 disabled = true
 
-[battery]
-disabled = true
-
 [shell]
 disabled = true
 
