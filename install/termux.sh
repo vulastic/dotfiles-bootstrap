@@ -31,7 +31,7 @@ pkg update -y
 info "Installing necessary packages"
 pkg install -y \
     openssh tmux git curl wget vim htop procps \
-    termux-services ncurses-utils rsync cronie tar gzip unzip
+    termux-services ncurses-utils rsync cronie tar gzip unzip starship
 
 
 # ------------------------------------------------------------
@@ -68,42 +68,48 @@ info "tmux config installed to $TMUX_DST"
 
 
 # ------------------------------------------------------------
-# theme
+# Starship config
 # ------------------------------------------------------------
-THEME_SRC="$REPO_ROOT/config/bash/theme/tokyonight.sh"
-THEME_DIR="$HOME/.config/themes"
-THEME_DST="$THEME_DIR/tokyonight.sh"
+STARSHIP_SRC="$REPO_ROOT/config/starship/starship.toml"
+STARSHIP_DIR="$HOME/.config/starship"
+STARSHIP_DST="$STARSHIP_DIR/starship.toml"
 
-info "Installing tokyonight theme"
+info "Installing Starship configuration"
 
-if [ ! -f "$THEME_SRC" ]; then
-    echo "ERROR: theme source not found: $THEME_SRC"
+if [ ! -f "$STARSHIP_SRC" ]; then
+    echo "ERROR: starship config not found: $STARSHIP_SRC"
     exit 1
 fi
 
-mkdir -p "$THEME_DIR"
+mkdir -p "$STARSHIP_DIR"
 
-if [ -f "$THEME_DST" ]; then
-    BACKUP="$THEME_DST.bak.$(date +%Y%m%d%H%M%S)"
-    cp "$THEME_DST" "$BACKUP"
-    info "Existing theme backed up: $BACKUP"
+if [ -f "$STARSHIP_DST" ]; then
+    BACKUP="$STARSHIP_DST.bak.$(date +%Y%m%d%H%M%S)"
+    cp "$STARSHIP_DST" "$BACKUP"
+    info "Existing Starship config backed up: $BACKUP"
 fi
 
-cp "$THEME_SRC" "$THEME_DST"
-info "Theme installed to $THEME_DST"
+cp "$STARSHIP_SRC" "$STARSHIP_DST"
+info "Starship config installed to $STARSHIP_DST"
 
 
 # ------------------------------------------------------------
-# Bash theme activation
+# Bash Starship activation
 # ------------------------------------------------------------
-THEME_LINE='[ -f "$HOME/.config/themes/tokyonight.sh" ] && source "$HOME/.config/themes/tokyonight.sh"'
-
 BASHRC="$HOME/.bashrc"
 touch "$BASHRC"
 
-if ! grep -Fxq "$THEME_LINE" "$BASHRC"; then
-    echo "$THEME_LINE" >> "$BASHRC"
-    info "TokyoNight theme added to bashrc"
+STARSHIP_CONFIG_LINE='export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"'
+STARSHIP_INIT_LINE='eval "$(starship init bash)"'
+
+if ! grep -Fxq "$STARSHIP_CONFIG_LINE" "$BASHRC"; then
+    echo "$STARSHIP_CONFIG_LINE" >> "$BASHRC"
+    info "STARSHIP_CONFIG added to bashrc"
+fi
+
+if ! grep -Fxq "$STARSHIP_INIT_LINE" "$BASHRC"; then
+    echo "$STARSHIP_INIT_LINE" >> "$BASHRC"
+    info "Starship initialization added to bashrc"
 fi
 
 
@@ -116,4 +122,5 @@ echo ""
 warn "Next steps:"
 warn "  sv-enable sshd"
 warn "  pkg upgrade -y"
+warn "  source ~/.bashrc"
 echo ""

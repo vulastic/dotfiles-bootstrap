@@ -9,6 +9,7 @@ info() {
     echo -e "\e[38;2;255;158;100m$1\e[0m"
 }
 
+
 # ------------------------------------------------------------
 # System update
 # ------------------------------------------------------------
@@ -21,6 +22,7 @@ elif command -v dnf >/dev/null; then
 elif command -v pacman >/dev/null; then
     sudo pacman -Syu --noconfirm
 fi
+
 
 # ------------------------------------------------------------
 # Install packages
@@ -41,21 +43,41 @@ elif command -v pacman >/dev/null; then
         rsync cronie tar gzip unzip
 fi
 
+
 # ------------------------------------------------------------
-# Enable SSH service (systemd)
+# Install Starship
+# ------------------------------------------------------------
+info "Installing Starship"
+
+if ! command -v starship >/dev/null; then
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+else
+    info "Starship already installed → skipping"
+fi
+
+
+# ------------------------------------------------------------
+# Enable SSH service
 # ------------------------------------------------------------
 info "Enabling SSH service"
 
 if command -v systemctl >/dev/null; then
-    sudo systemctl enable ssh || sudo systemctl enable sshd
-    sudo systemctl start ssh || sudo systemctl start sshd
+    if systemctl list-unit-files | grep -q "^sshd.service"; then
+        sudo systemctl enable sshd
+        sudo systemctl start sshd
+    elif systemctl list-unit-files | grep -q "^ssh.service"; then
+        sudo systemctl enable ssh
+        sudo systemctl start ssh
+    fi
 fi
+
 
 # ------------------------------------------------------------
 # Paths
 # ------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 
 # ------------------------------------------------------------
 # tmux config install
@@ -82,43 +104,50 @@ fi
 cp "$TMUX_SRC" "$TMUX_DST"
 info "tmux config installed"
 
-# ------------------------------------------------------------
-# theme install
-# ------------------------------------------------------------
-info "Installing tokyonight theme"
 
-THEME_SRC="$REPO_ROOT/config/bash/theme/tokyonight.sh"
-THEME_DIR="$HOME/.config/themes"
-THEME_DST="$THEME_DIR/tokyonight.sh"
+# ------------------------------------------------------------
+# Starship config install
+# ------------------------------------------------------------
+info "Installing Starship configuration"
 
-if [ ! -f "$THEME_SRC" ]; then
-    echo "ERROR: theme not found: $THEME_SRC"
+STARSHIP_SRC="$REPO_ROOT/config/starship/starship.toml"
+STARSHIP_DIR="$HOME/.config/starship"
+STARSHIP_DST="$STARSHIP_DIR/starship.toml"
+
+if [ ! -f "$STARSHIP_SRC" ]; then
+    echo "ERROR: starship config not found: $STARSHIP_SRC"
     exit 1
 fi
 
-mkdir -p "$THEME_DIR"
+mkdir -p "$STARSHIP_DIR"
 
-if [ -f "$THEME_DST" ]; then
-    BACKUP="$THEME_DST.bak.$(date +%Y%m%d%H%M%S)"
-    cp "$THEME_DST" "$BACKUP"
-    info "Backed up existing theme"
+if [ -f "$STARSHIP_DST" ]; then
+    BACKUP="$STARSHIP_DST.bak.$(date +%Y%m%d%H%M%S)"
+    cp "$STARSHIP_DST" "$BACKUP"
+    info "Backed up existing Starship config"
 fi
 
-cp "$THEME_SRC" "$THEME_DST"
-info "Theme installed"
+cp "$STARSHIP_SRC" "$STARSHIP_DST"
+info "Starship config installed"
 
 
 # ------------------------------------------------------------
-# Bash theme activation
+# Bash Starship activation
 # ------------------------------------------------------------
-THEME_LINE='[ -f "$HOME/.config/themes/tokyonight.sh" ] && source "$HOME/.config/themes/tokyonight.sh"'
-
 BASHRC="$HOME/.bashrc"
 touch "$BASHRC"
 
-if ! grep -Fxq "$THEME_LINE" "$BASHRC"; then
-    echo "$THEME_LINE" >> "$BASHRC"
-    info "TokyoNight theme added to bashrc"
+STARSHIP_CONFIG_LINE='export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"'
+STARSHIP_INIT_LINE='eval "$(starship init bash)"'
+
+if ! grep -Fxq "$STARSHIP_CONFIG_LINE" "$BASHRC"; then
+    echo "$STARSHIP_CONFIG_LINE" >> "$BASHRC"
+    info "STARSHIP_CONFIG added to bashrc"
+fi
+
+if ! grep -Fxq "$STARSHIP_INIT_LINE" "$BASHRC"; then
+    echo "$STARSHIP_INIT_LINE" >> "$BASHRC"
+    info "Starship initialization added to bashrc"
 fi
 
 
@@ -126,3 +155,8 @@ fi
 # Completion
 # ------------------------------------------------------------
 info "Linux bootstrap installation complete!"
+
+echo ""
+info "Reload shell configuration with:"
+echo "source ~/.bashrc"
+echo ""
