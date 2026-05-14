@@ -14,12 +14,14 @@
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
-function Write-Info($msg)   { Write-Host "[INFO] $msg" -ForegroundColor Blue }
-function Write-Ok($msg)     { Write-Host "[OK] $msg" -ForegroundColor Green }
-function Write-Warn($msg)   { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
-function Write-Err($msg)    { Write-Host "[ERROR] $msg" -ForegroundColor Red }
-function Write-Header($msg) { Write-Host "=== $msg ===" -ForegroundColor Magenta }
-function Write-Step($msg)   { Write-Host "==> $msg" -ForegroundColor Cyan }
+function Write-Info($msg)   { Write-Host $msg -ForegroundColor Blue }
+function Write-Ok($msg)     { Write-Host $msg -ForegroundColor Green }
+function Write-Warn($msg)   { Write-Host $msg -ForegroundColor Yellow }
+function Write-Err($msg)    { Write-Host $msg -ForegroundColor Red }
+function Write-Header($msg) {
+    Write-Host ""
+    Write-Host "== $msg ==" -ForegroundColor Magenta
+}
 
 function Test-Command($name) {
     return [bool](Get-Command $name -ErrorAction SilentlyContinue)
@@ -43,17 +45,12 @@ $RepoRoot   = Split-Path -Parent $PSScriptRoot
 # ------------------------------------------------------------
 # 1. Install PowerShell 7 via Winget
 # ------------------------------------------------------------
-
-Write-Step "Checking PowerShell 7..."
+Write-Header "Installing PowerShell 7..."
 
 if (Test-Command pwsh) {
-
     Write-Ok "PowerShell 7 already installed."
 }
 else {
-
-    Write-Info "Installing PowerShell 7..."
-
     winget install --id Microsoft.PowerShell -e --accept-package-agreements --accept-source-agreements | Out-Null
 
     if (-not (Test-Command pwsh)) {
@@ -68,15 +65,12 @@ else {
 # ------------------------------------------------------------
 # 2. Install Scoop
 # ------------------------------------------------------------
-
-Write-Step "Checking Scoop..."
+Write-Header "Installing Scoop..."
 
 if (Test-Command scoop) {
     Write-Ok "Scoop already installed."
 }
 else {
-    Write-Info "Installing Scoop..."
-
     Set-ExecutionPolicy Bypass -Scope Process -Force
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -97,8 +91,7 @@ else {
 # ------------------------------------------------------------
 # 3. Install Packages (git, Starship)   
 # ------------------------------------------------------------
-
-Write-Step "Installing packages (git, Starship)..."
+Write-Header "Installing packages (git, Starship)..."
 
 $Packages = @(
     "git",
@@ -121,7 +114,7 @@ foreach ($pkg in $Packages) {
 # ------------------------------------------------------------
 # Add Scoop buckets (main, extras, nerd-fonts)
 # ------------------------------------------------------------
-Write-Step "Adding Scoop buckets..."
+Write-Header "Adding Scoop buckets..."
 
 & "$HOME\scoop\shims\scoop.ps1" update
 
@@ -135,8 +128,7 @@ Write-Ok "Scoop Buckets ready."
 # ------------------------------------------------------------
 # 4. Download Nerd Fonts via Scoop, extract, and selective install to Windows Fonts (remove after installation)
 # ------------------------------------------------------------
-
-Write-Step "Installing Nerd Fonts (Iosevka Nerd Term, Iosevka Nerd Mono, Sarasa Mono K)"
+Write-Header "Installing Nerd Fonts (Iosevka Nerd Term, Iosevka Nerd Mono, Sarasa Mono K)"
 
 $FontPackages = @(
     "Iosevka-NF",
@@ -247,8 +239,7 @@ finally {
 # ------------------------------------------------------------
 # 5. Configuration Windows Terminal
 # ------------------------------------------------------------
-
-Write-Step "Configuring Windows Terminal..."
+Write-Header "Configuring Windows Terminal..."
 
 $wtSource  = Join-Path $RepoRoot "config\windows-terminal\settings.json"
 
@@ -267,8 +258,7 @@ else {
 # ------------------------------------------------------------
 # 6. Setup PowerShell Profile using starship
 # ------------------------------------------------------------
-
-Write-Step "Setting up PowerShell profile with Starship..."
+Write-Header "Setting up PowerShell profile with Starship..."
 
 $doc = Join-Path $HOME "Documents"
 
@@ -321,4 +311,5 @@ Write-Ok "PowerShell profiles configured with Starship."
 
 # ------------------------------------------
 
-Write-Header "Complete windows configuration. You may need to restart Windows Terminal or PowerShell to see the changes."
+Write-Warn "Complete windows configuration."
+Write-Warn "You may need to restart Windows Terminal or PowerShell to see the changes."
