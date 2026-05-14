@@ -97,6 +97,6 @@ success "Bash configuration updated"
 section "Installation complete"
 
 warn "Next steps:"
+warn "  Close and reopen the Termux session"
 warn "  sv-enable sshd"
-warn "  pkg upgrade -y"
 warn "  source ~/.bashrc"
