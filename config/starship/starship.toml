@@ -1,5 +1,7 @@
 # Starship configuration - Tokyo Night Lean Theme
 
+add_newline = false
+
 format = """
 $os\
 $username\

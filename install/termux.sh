@@ -85,7 +85,7 @@ section "Configuring bash"
 
 append_if_missing \
 'export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
-eval "$(starship init bash)"' \
+eval "$(starship init bash --print-full-init)"' \
 "$HOME/.bashrc"
 
 success "Bash configuration updated"
