@@ -15,7 +15,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source "${SCRIPT_DIR}/common.sh"
 
-section "Linux Development Environment Setup"
+section "Linux Server Environment Setup"
 
 PKG_MANAGER="$(detect_package_manager)"
 
