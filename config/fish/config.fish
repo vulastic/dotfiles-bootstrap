@@ -1,62 +1,37 @@
-if status is-interactive
+# ------------------------------------------------------------
+# Starship
+# ------------------------------------------------------------
+
+set -gx STARSHIP_CONFIG ~/.config/starship/starship.toml
+
+starship init fish | source
+
+# ------------------------------------------------------------
+# Direnv
+# ------------------------------------------------------------
+
+if type -q direnv
+    direnv hook fish | source
 end
 
-
-set -gx EDITOR nvim
-set -gx VISUAL nvim
-set -gx GHQ_ROOT "$HOME/src"
-
-if type -q eza
-    alias ls 'eza --icons=auto'
-    alias ll 'eza --icons=auto --long --git'
-    alias la 'eza --icons=auto --long --all --git'
-end
-
-if type -q bat
-    alias cat 'bat'
-else if type -q batcat
-    alias cat 'batcat'
-end
-
-# fzf 미리보기를 위한 bat 별칭 설정
-if type -q bat
-    alias bat 'bat'
-else if type -q batcat
-    alias bat 'batcat'
-end
-
-if type -q rg
-    alias grep 'rg'
-end
-
-if type -q fd
-    alias find 'fd'
-else if type -q fdfind
-    alias find 'fdfind'
-end
-
-alias vim 'nvim'
-alias vi 'nvim'
+# ------------------------------------------------------------
+# zoxide
+# ------------------------------------------------------------
 
 if type -q zoxide
     zoxide init fish | source
 end
 
-if type -q starship
-    starship init fish | source
+# ------------------------------------------------------------
+# Aliases
+# ------------------------------------------------------------
+
+if type -q eza
+    alias ls="eza"
+    alias ll="eza -la"
+    alias lt="eza --tree"
 end
 
-# Enable fzf key bindings (Alt+r, Alt+t, etc.)
-if type -q fzf
-    fzf --fish | source
-    if type -q fzf_configure_bindings
-        fzf_configure_bindings --history=\ar --directory=\at
-    end
+if type -q bat
+    alias cat="bat"
 end
-
-# Load aliases from aliases.fish
-if test -f "$HOME/.config/shell/aliases.fish"
-    source "$HOME/.config/shell/aliases.fish"
-end
-
-

@@ -1,0 +1,14 @@
+starship
+tmux
+neovim
+direnv
+ripgrep
+fd
+fzf
+bat
+eza
+zoxide
+jq
+yq-go
+lazygit
+tree

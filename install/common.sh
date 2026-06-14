@@ -203,3 +203,29 @@ install_config() {
     success "Installed:"
     success "  $dst"
 }
+
+# ------------------------------------------------------------
+# Install config directory
+# ------------------------------------------------------------
+
+install_directory() {
+    local src="$1"
+    local dst="$2"
+
+    [[ -d "$src" ]] || die "Directory not found: $src"
+
+    mkdir -p "$(dirname "$dst")"
+
+    if [[ -d "$dst" ]]; then
+        local backup="${dst}.bak.$(date +%Y%m%d%H%M%S)"
+        cp -R "$dst" "$backup"
+
+        info "Existing directory backed up:"
+        info "  $backup"
+    fi
+
+    cp -R "$src" "$dst"
+
+    success "Installed:"
+    success "  $dst"
+}
